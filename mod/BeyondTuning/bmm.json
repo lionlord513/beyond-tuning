@@ -1,10 +1,10 @@
 {
   "Id": "beyondtuning",
   "Name": "Beyond Tuning",
-  "Version": "1.0.0",
+  "Version": "1.1.0",
   "Channel": "stable",
-  "Description": "Standalone Car Tuning computer app: real engine calibration, individual turbos, optional BA nitrous, permanent presets and rotatable engine hologram.",
-  "Changelog": "Initial release: native Car Tuning app, working engine/gearbox calibration, independent turbo boost, optional BA nitrous injection, transparent rotatable engine view, permanent presets and save recovery.",
+  "Description": "Car Tuning with engine-specific Drift/Race examples, multiplayer calibration and live telemetry, a folding portable laptop, persistent tunes and optional BA nitrous.",
+  "Changelog": "42 engine-specific presets; native drift assistance and race gearing; multiplayer host-saved tuning and driver telemetry; engine heat overlay; imported folding laptop with static idle display.",
   "Dependencies": [
     "UE4SS"
   ],

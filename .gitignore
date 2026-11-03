@@ -15,6 +15,7 @@ mod/BeyondTuning/presets/*.json
 !mod/BeyondTuning/presets/Stock.json
 !mod/BeyondTuning/presets/Street.json
 !mod/BeyondTuning/presets/Economy.json
+!mod/BeyondTuning/presets/Example*.json
 
 mod/BeyondTuning/assets/native/BeyondTuningBridge.dll
 mod/BeyondTuning/presets/*.bak

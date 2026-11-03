@@ -1,5 +1,5 @@
 return function(root,J,P)
- local S={records={},ready=false,settings={theme='Classic',accent=1,graph=1,simple=false,units='km/h'},presets={}}
+ local S={records={},ready=false,settings={theme='Classic',accent=1,graph=1,simple=false,heat=true,units='km/h'},presets={}}
  function S.read(path,limit)local f=io.open(path,'rb');if not f then return end;local s=f:read((limit or 65536)+1);f:close();assert(#s<=(limit or 65536),'File is too large');return s end
  function S.recover(path,decode,limit)
   local lastError
@@ -22,6 +22,7 @@ return function(root,J,P)
   if d.theme=='Classic'or d.theme=='Dark'then S.settings.theme=d.theme end
   for _,k in ipairs({'accent','graph'})do if type(d[k])=='number'and d[k]>=1 and d[k]<=5 then S.settings[k]=math.floor(d[k])end end
   S.settings.simple=d.simple==true;if d.units=='mph'then S.settings.units='mph'end
+  S.settings.heat=d.heat~=false
  end
  function S.guid(g)return ('%08x%08x%08x%08x'):format(g.A&0xffffffff,g.B&0xffffffff,g.C&0xffffffff,g.D&0xffffffff)end
  function S.saveKey(save)

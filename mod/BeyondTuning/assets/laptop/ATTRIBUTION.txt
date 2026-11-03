@@ -1,0 +1,10 @@
+Old low-poly laptop (PSX retro prop)
+Creator: ZwiebelGames — https://sketchfab.com/ZwiebelGames
+Source: https://sketchfab.com/3d-models/old-low-poly-laptop-psx-retro-prop-a2d9f3d0080b412983e19825aace11b5
+License: Creative Commons Attribution 4.0 International
+https://creativecommons.org/licenses/by/4.0/
+
+Modifications for Beyond Tuning: converted coordinate system and units; separated
+base, hinged lid and screen; remapped screen UVs for the in-game display.
+The original model and its texture remain licensed under CC BY 4.0.
+The creator does not endorse this mod. Flat utility textures are by Beyond Tuning.

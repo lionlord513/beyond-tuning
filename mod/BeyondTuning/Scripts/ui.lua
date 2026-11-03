@@ -47,7 +47,7 @@ return function(T)
   if valid(U.ui)then U.ui:RemoveFromParent()end;U.ui=nil;U.opened=false;U.menu=nil;U.hits={};U.pending={};U.generation=U.generation+1
   if valid(U.hud)and valid(U.pc)and U.hud:IsInViewport()then U.hud:SetVisibility(0);lib:SetInputMode_UIOnlyEx(U.pc,U.hud,0,false)end
  end
- local function preset(p)T.draft=P.copy(p.tune);T.presetName=p.name;U.menu=nil;dirty();T.status(p.name..' loaded as a draft. Press Apply to write it to this car.')end
+ local function preset(p)T.draft=P.copy(p.tune);T.presetName=p.name;U.menu=nil;dirty();T.status(p.name..' loaded as a draft. '..(p.description or'Press Apply to write it to this car.'))end
  local function sheet(title)
   local p=U.panel;rect(p,14,82,1372,754,U.paper);rect(p,14,82,1372,4,U.accent);label(p,title,38,105,1000,40,25)
   button(p,'Back to tuning',1180,101,178,38,function()U.menu=nil;refresh()end);return p
@@ -55,15 +55,15 @@ return function(T)
  local function help()
   local p=sheet('HELP / Get from stock to your own tune')
   local lines={
-   {'01  Connect to your car','Sit in the car you want to tune, then leave it and open a computer. Car Tuning remembers that car.','The vehicle and installed engine are shown at the top. Swapping the engine reconnects the app.'},
-   {'02  Make a small change','Start with the Street or Economy preset under File. Or change one setting using the + and - buttons.','Engine output changes wheel torque. Final drive trades speed per gear for acceleration.'},
-   {'03  Apply and test','Stop the car (under 2 km/h), then press Apply. The tune is saved to disk immediately, including a preset copy.','Drive the same road to compare. Live Log records RPM, speed and pedal. Save your game to keep the car itself.'},
+   {'01  Connect to your car','Sit in your car, then open Car Tuning on a computer or mounted laptop. It remembers the last car you sat in.','The vehicle and installed engine are shown at the top. Swapping the engine reconnects the app.'},
+   {'02  Start with an engine example','File > Presets offers Drift and Race for your installed engine. Load one, adjust it, then press Apply.','Drift adds rear drive and SLIDY-style assistance. Race adds grip, launch torque and taller top gears.'},
+   {'03  Apply and test','Apply works from the driver seat, even while moving. Changes and a reusable preset are saved immediately.','Compare on the same road. Race uses maximum output: watch heat, fuel and traction. Save to keep the car itself.'},
    {'04  Fine-tune the table','Click a cell, then use -5 / +5. Rows are pedal position; columns are RPM across your engine redline.','100 is stock. 110 adds 10% torque in that region. Values blend smoothly between neighboring cells.'},
    {'05  Import, export and share','File > Import opens a drop window. Drag one preset JSON onto it, or click Browse. Review, then Apply.','File > Export opens Save As. File > Save preset stores a reusable copy; Preset folder opens it in Explorer.'},
-   {'06  Read the displays','Curve shows engine correction only, before turbo and nitrous effects. Live Log uses real readings.','Engine view shows the installed motor in 3D. Drag to orbit, use the zoom buttons, or press Top.'},
+   {'06  Use your portable computer','File > Laptop buys the imported folding laptop for $250. Click its screen to open the native desktop.','Click the bezel to fold it. Pick up the base and use normal attachment controls to mount its bottom in a car.'},
   }
   for i,row in ipairs(lines)do local y=166+(i-1)*98;label(p,row[1],42,y,1300,28,19,U.accent);label(p,row[2],42,y+31,1300,24,16);label(p,row[3],42,y+55,1300,24,16,U.muted)end
-  label(p,'Boost: tune each fitted turbo; BA nitrous at 50% gives half the injection force and about twice the duration.',42,778,1300,26,16,U.muted)
+  label(p,'Multiplayer: everyone needs this mod. Host saves tunes; the driver supplies live telemetry. Esc freezes the laptop screen.',42,778,1300,26,15,U.muted)
  end
  local function settings()
   local p=sheet('SETTINGS / Make the workspace yours')
@@ -81,7 +81,8 @@ return function(T)
   label(p,'Simple view keeps the five main controls, presets, graphs and Apply. It hides the cell editor.',42,478,1260,26,17,U.muted)
   label(p,'Speed units',42,548,320,32,20)
   for i,name in ipairs({'km/h','mph'})do button(p,name,400+(i-1)*210,542,190,42,function()S.settings.units=name;S.saveSettings();refresh()end,S.settings.units==name)end
-  label(p,'Preferences are saved automatically and preserved by Beyond Mod Manager updates.',42,660,1250,32,18,U.muted)
+  button(p,'Engine heat overlay: '..(S.settings.heat and'ON'or'OFF'),42,625,480,44,function()S.settings.heat=not S.settings.heat;S.saveSettings();refresh()end,S.settings.heat)
+  label(p,'Color shows the engine temperature, not a per-cylinder thermal simulation.',550,636,790,28,16,U.muted)
   label(p,'Beyond Tuning '..T.version..'  /  native computer integration  /  DBH build 26106988',42,718,1250,32,17,U.muted)
  end
  local function files()
@@ -92,15 +93,21 @@ return function(T)
   button(p,'Import / drop JSON...',42,235,310,46,function()S.native('import');T.status('Drop a preset on the import window, or use Browse.')end,true)
   button(p,'Open preset folder',374,235,270,46,function()S.native('folder')end)
   button(p,'Refresh presets',666,235,230,46,function()S.list();refresh()end)
-  label(p,'Load a preset into the draft. Apply sends it to the connected car.',42,319,1270,32,18,U.muted)
-  local list=S.list();U.presetPage=math.min(U.presetPage or 1,math.max(1,math.ceil(#list/12)))
+  button(p,'Presets >',930,235,190,46,function()U.fileTab='Presets';U.presetPage=1;refresh()end,U.fileTab~='All')
+  button(p,'All / saved',1140,235,200,46,function()U.fileTab='All';U.presetPage=1;refresh()end,U.fileTab=='All')
+  local all=S.list();local list={};local motor=V.motor(V.last);local engine=valid(motor)and motor:GetClass():GetFName():ToString()
+  for _,row in ipairs(all)do if U.fileTab=='All'or not row.engine or row.engine==engine then list[#list+1]=row end end
+  table.sort(list,function(a,b)if(a.engine~=nil)~=(b.engine~=nil)then return a.engine~=nil end;return a.name<b.name end)
+  label(p,U.fileTab=='All'and 'FILE > PRESETS / All engines and your saved tunes'or('FILE > PRESETS / '..(engine and V.name(motor)or'Sit in a car to see its engine examples')),42,319,1270,32,18,U.accent)
+  U.presetPage=math.min(U.presetPage or 1,math.max(1,math.ceil(#list/12)))
   for i=(U.presetPage-1)*12+1,math.min(#list,U.presetPage*12)do local n=i-(U.presetPage-1)*12-1;local row=list[i]
    button(p,row.name,42+n%3*438,373+math.floor(n/3)*72,415,54,function()preset(row)end,false,18)
   end
   button(p,'< Previous',42,696,180,40,function()U.presetPage=math.max(1,U.presetPage-1);refresh()end)
   button(p,'Next >',240,696,180,40,function()U.presetPage=math.min(math.max(1,math.ceil(#list/12)),U.presetPage+1);refresh()end)
-  label(p,'Page '..U.presetPage..'  /  '..#list..' presets',448,705,780,30,17,U.muted)
-  label(p,'Share the JSON file. Import checks the format and ranges; it never runs preset code.',42,778,1290,28,17,U.muted)
+  label(p,'Page '..U.presetPage..'  /  '..#list..' presets',448,705,460,30,17,U.muted)
+  button(p,'Laptop / Buy for $250',1010,696,330,44,function()T.laptop.order()end,true,16)
+  label(p,'Drift: rear drive + native assist. Race: max output + longer top gears. Load, edit, Apply, then Save preset.',42,778,1290,28,16,U.muted)
  end
  local function boost()
   local p=sheet('BOOST / Nitrous injection and individual turbos');local I=T.induction;local a=V.last
@@ -119,17 +126,17 @@ return function(T)
   label(p,'INSTALLED TURBOS',42,365,800,32,20,U.accent)
   local list=I.turbos(V.lastMotor);U.turboPage=math.min(U.turboPage or 1,math.max(1,math.ceil(#list/4)))
   if #list==0 then label(p,'Unavailable - fit a turbo to the installed engine first.',42,426,1260,32,19,U.muted)end
-  for i=(U.turboPage-1)*4+1,math.min(#list,U.turboPage*4)do local x=list[i];local y=417+(i-(U.turboPage-1)*4-1)*65;local value=T.draft.turbos[x.key]or 100
+  for i=(U.turboPage-1)*4+1,math.min(#list,U.turboPage*4)do local x=list[i];local y=417+(i-(U.turboPage-1)*4-1)*65;local value=T.draft.turbos[x.key]or T.draft.turboDefault or 100
    label(p,('Turbo %d / %s'):format(i,x.name),42,y,560,30,18)
    label(p,x.key,42,y+29,650,24,13,U.muted)
-   button(p,'-',730,y,52,40,function()T.draft.turbos[x.key]=math.max(25,(T.draft.turbos[x.key]or 100)-25);dirty()end)
+   button(p,'-',730,y,52,40,function()T.draft.turbos[x.key]=math.max(25,value-25);dirty()end)
    label(p,('%g%% boost'):format(value),804,y+6,190,30,19,U.accent)
-   button(p,'+',1002,y,52,40,function()T.draft.turbos[x.key]=math.min(200,(T.draft.turbos[x.key]or 100)+25);dirty()end)
+   button(p,'+',1002,y,52,40,function()T.draft.turbos[x.key]=math.min(200,value+25);dirty()end)
    button(p,'Stock',1090,y,180,40,function()T.draft.turbos[x.key]=nil;dirty()end)
   end
   if #list>4 then button(p,'<',42,695,55,34,function()U.turboPage=math.max(1,U.turboPage-1);refresh()end);button(p,'>',110,695,55,34,function()U.turboPage=math.min(math.ceil(#list/4),U.turboPage+1);refresh()end)end
   label(p,'Each setting scales that turbo\'s native boost contribution. 100% is stock; missing slots are ignored.',42,742,1290,28,16,U.muted)
-  label(p,T.dirty and 'DRAFT / Stop the car, then Apply.'or'Changes are saved with the car and engine.',42,792,870,28,17,U.muted)
+  label(p,T.dirty and 'DRAFT / Press Apply to save changes to this car.'or'Changes are saved with the car and engine.',42,792,870,28,17,U.muted)
   button(p,'Apply to car',1148,780,205,45,function()V.apply(T.draft);refresh()end,true,18)
  end
  local function diagnostics()
@@ -139,7 +146,7 @@ return function(T)
    {'Tune identity',V.current and V.current.id or'Not assigned yet'},
    {'Transmission',V.current and (#V.current.base.gears-1)..' forward gears + reverse'or'--'},
    {'Engine redline',V.current and math.floor(V.current.base.redline)..' RPM'or'--'},
-   {'Authority',valid(a)and(a:HasAuthority()and 'Host / tuning enabled'or'Client / read only')or'--'}}
+   {'Authority',valid(a)and(a:HasAuthority()and'Host / tuning enabled'or(T.network and T.network.connected and'Client / host synchronization active'or'Client / waiting for host mod'))or'--'}}
   if valid(a)then for _,d in ipairs({{'Battery','CarBatteryV2'},{'Radiator','CarRadiatorV2'},{'Fuel tank','CarTankGasV2'}})do local slot=a[d[2]];rows[#rows+1]={d[1],valid(slot)and V.name(slot.AttachedCarEquipableActor)or'Not installed'}end end
   for i,row in ipairs(rows)do label(p,row[1],42,169+(i-1)*48,280,31,17,U.muted);label(p,row[2],330,169+(i-1)*48,1000,31,18)end
   label(p,'Hardware names come from the installed actors. Exact class identifiers are included above.',42,762,1280,32,17,U.muted)
@@ -168,7 +175,8 @@ return function(T)
   button(p,'Stock',28,685,185,42,function()preset({name='Stock',tune=P.stock()})end)
   button(p,'Presets...',228,685,185,42,function()U.menu='File';refresh()end)
   button(p,'Restore stock',428,685,207,42,function()T.draft=P.stock();V.apply(T.draft);refresh()end)
-  label(p,'Change one setting at a time. Use ? for a plain-language explanation.',28,744,610,25,13,U.muted)
+  button(p,'Handling: '..(T.draft.handling or'stock'),28,737,290,31,function()local nextMode={stock='drift',drift='race',race='stock'};T.draft.handling=nextMode[T.draft.handling or'stock'];dirty()end,false,14)
+  button(p,'Gears: '..(T.draft.gearshape or'standard'),330,737,305,31,function()local nextMode={standard='drift',drift='race',race='standard'};T.draft.gearshape=nextMode[T.draft.gearshape or'standard'];dirty()end,false,14)
   end
   for i,d in ipairs({{'Curve','Tuning curve'},{'Live','Live log'},{'Engine','Engine view'}})do button(p,d[2],686+(i-1)*224,391,212,32,function()U.mode=d[1];refresh()end,U.mode==d[1],14)end
   U.graphRT=D.target(U.pc,712,440);local graph=rect(p,680,431,700,337,color(1,1,1));graph:SetBrushResourceObject(U.graphRT)
@@ -209,6 +217,7 @@ return function(T)
   D.clearEngine();U.engineImage=nil;U.hits={};U.generation=U.generation+1;p:ClearChildren();U.gaugeRT=nil;U.graphRT=nil;U.gaugeValues=nil
   rect(p,0,0,1400,900,U.bg);rect(p,0,0,1400,35,U.paper);label(p,'BEYOND TUNING  /  Car Tuning',15,5,1150,29,17,U.ink)
   button(p,'X',1351,0,49,35,U.close,false,17)
+  if T.laptop and T.laptop.active then button(p,'Return to laptop',1110,0,230,35,T.laptop.close,false,15)end
   local x=14
   for _,name in ipairs({'File','View','Boost','Vehicle','Settings','Help'})do local tab=name
    button(p,name,x,42,tab=='Settings'and 112 or 92,32,function()
@@ -233,6 +242,11 @@ return function(T)
    else U.lastPointer={x,y}end
   end
   local t=V.telemetry
+  if valid(U.engineImage)then
+   local shade=D.color(S.settings.graph)
+   if S.settings.heat and t.heat then local f=math.max(0,math.min(1,(t.heat-55)/65));shade={R=.1+.9*f,G=.85-.7*f,B=1-.95*f,A=1}end
+   U.engineImage:SetColorAndOpacity(shade)
+  end
   if valid(U.gaugeRT)then
    D.gauges(U.pc,U.gaugeRT,t)
    local speed=(t.speed or 0)*(S.settings.units=='mph'and .621371 or 1)

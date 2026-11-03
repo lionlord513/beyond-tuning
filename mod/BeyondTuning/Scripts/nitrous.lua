@@ -66,11 +66,17 @@ return function(T)
    -- Native boost input events can reapply BA's unchanged force between burns.
    a.BoostForce=c.writtenForce
   end
+  if T.network and now>=(c.syncAt or 0)then c.syncAt=now+.1;T.network.nitrousForce(a,c.writtenForce,c.baseForce)end
  end
  function N.tick(now)
-  if now>=(N.nextScan or 0)then N.nextScan=now+1;N.scan();N.install()end
+  if now>=(N.nextScan or 0)then N.nextScan=now+(N.available and 1 or 5);N.scan();N.install()end
   for _,c in pairs(N.cars)do N.force(c,now)end
+  local r=N.remote;if r then
+   if not valid(r.actor)then N.remote=nil
+   elseif now<r.untilTime and r.actor.BoostInput>0 then r.actor.BoostForce=r.force
+   else if math.abs(r.actor.BoostForce-r.force)<.001 then r.actor.BoostForce=r.base end;N.remote=nil end
+  end
  end
- function N.reset()N.tanks={};N.cars={};N.nextScan=0;N.writing=false end
+ function N.reset()N.tanks={};N.cars={};N.remote=nil;N.nextScan=0;N.writing=false end
  return N
 end

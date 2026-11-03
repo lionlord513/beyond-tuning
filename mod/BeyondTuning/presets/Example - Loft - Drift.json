@@ -1,0 +1,72 @@
+{
+  "format": "BeyondTuning",
+  "schema": 1,
+  "name": "Loft - Drift",
+  "engine": "BP_GermanCompact_Motor_C",
+  "category": "Drift",
+  "description": "SLIDY-style native drift assistance, rear drive, broad steering and a progressive torque map. Short gears sustain wheelspin; 50% nitrous favors duration.",
+  "tune": {
+    "power": 130,
+    "gearing": 120,
+    "limiter": 105,
+    "shift": 80,
+    "response": 110,
+    "nitrous": 50,
+    "turbos": {},
+    "turboDefault": 105,
+    "handling": "drift",
+    "gearshape": "drift",
+    "map": [
+      [
+        97,
+        100,
+        104,
+        107,
+        108,
+        107,
+        104,
+        101
+      ],
+      [
+        94,
+        100,
+        108,
+        114,
+        116,
+        114,
+        108,
+        102
+      ],
+      [
+        91,
+        100,
+        112,
+        121,
+        124,
+        121,
+        112,
+        103
+      ],
+      [
+        88,
+        100,
+        116,
+        128,
+        132,
+        128,
+        116,
+        104
+      ],
+      [
+        85,
+        100,
+        120,
+        135,
+        140,
+        135,
+        120,
+        105
+      ]
+    ]
+  }
+}

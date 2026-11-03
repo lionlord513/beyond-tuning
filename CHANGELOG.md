@@ -1,3 +1,13 @@
+# Beyond Tuning 1.1.0
+
+- 42 editable Drift and Race examples covering all 21 engine catalog types, with the current engine's pair under File > Presets.
+- Native SLIDY-style drift assistance, rear drive and wider steering; race grip and a progressive gear spread. Stock restoration includes handling.
+- Host-saved multiplayer tune requests, replicated car/engine identity, late-join synchronization and live driver telemetry.
+- Actual engine-temperature coloring on the existing hologram, without repeated mesh captures.
+- Imported folding laptop with screen-only desktop interaction, native pickup/mounting, driver-seat use and a static idle display.
+- Applying a tune while moving; default fitted-turbo calibration in examples, with individual overrides retained.
+- Preset schema remains backward-compatible with 1.0 files. Existing state and presets are preserved by Beyond Mod Manager.
+
 # Beyond Tuning 1.0.0
 
 Adds Car Tuning to in-game computers using the native window approach established by Beyond Apocalypse's Hangar app.

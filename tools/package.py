@@ -7,6 +7,8 @@ meta=json.loads((mod/'bmm.json').read_text())
 version=meta['Version'];out=root/'build';out.mkdir(exist_ok=True)
 name=f'BeyondTuning-{version}-Nexus.zip';archive=out/name
 allowed={'bmm.json','enabled.txt','state/KEEP.txt','assets/icon.png','assets/native/BeyondTuningNative.dll','presets/Stock.json','presets/Street.json','presets/Economy.json'}
+allowed.update('presets/'+name for name in json.loads((root/'tools/example-presets.json').read_text()))
+allowed.update('assets/laptop/'+name for name in ['base.lua','lid.lua','screen.lua','laptop.png','normal.png','roughness.png','black.png','white.png','wallpaper.png','ATTRIBUTION.txt'])
 prefix='DriveBeyondHorizons/Binaries/Win64/ue4ss/Mods/BeyondTuning/'
 with zipfile.ZipFile(archive,'w',zipfile.ZIP_DEFLATED,compresslevel=9) as z:
  for file in sorted(mod.rglob('*')):

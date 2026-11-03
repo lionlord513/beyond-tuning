@@ -1,0 +1,72 @@
+{
+  "format": "BeyondTuning",
+  "schema": 1,
+  "name": "GTR - Drift",
+  "engine": "BP_GTR_Motor_C",
+  "category": "Drift",
+  "description": "SLIDY-style native drift assistance, rear drive, broad steering and a progressive torque map. Short gears sustain wheelspin; 50% nitrous favors duration.",
+  "tune": {
+    "power": 120,
+    "gearing": 110,
+    "limiter": 105,
+    "shift": 80,
+    "response": 110,
+    "nitrous": 50,
+    "turbos": {},
+    "turboDefault": 105,
+    "handling": "drift",
+    "gearshape": "drift",
+    "map": [
+      [
+        95,
+        97,
+        101,
+        104,
+        107,
+        108,
+        106,
+        103
+      ],
+      [
+        90,
+        94,
+        102,
+        108,
+        114,
+        116,
+        112,
+        106
+      ],
+      [
+        85,
+        91,
+        103,
+        112,
+        121,
+        124,
+        118,
+        109
+      ],
+      [
+        80,
+        88,
+        104,
+        116,
+        128,
+        132,
+        124,
+        112
+      ],
+      [
+        75,
+        85,
+        105,
+        120,
+        135,
+        140,
+        130,
+        115
+      ]
+    ]
+  }
+}

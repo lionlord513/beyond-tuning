@@ -1,0 +1,72 @@
+{
+  "format": "BeyondTuning",
+  "schema": 1,
+  "name": "RotorGT7 - Drift",
+  "engine": "RotorGT7Motor_C",
+  "category": "Drift",
+  "description": "SLIDY-style native drift assistance, rear drive, broad steering and a progressive torque map. Short gears sustain wheelspin; 50% nitrous favors duration.",
+  "tune": {
+    "power": 130,
+    "gearing": 115,
+    "limiter": 105,
+    "shift": 80,
+    "response": 110,
+    "nitrous": 50,
+    "turbos": {},
+    "turboDefault": 105,
+    "handling": "drift",
+    "gearshape": "drift",
+    "map": [
+      [
+        97,
+        99,
+        102,
+        105,
+        108,
+        108,
+        107,
+        105
+      ],
+      [
+        94,
+        98,
+        104,
+        110,
+        116,
+        116,
+        114,
+        110
+      ],
+      [
+        91,
+        97,
+        106,
+        115,
+        124,
+        124,
+        121,
+        115
+      ],
+      [
+        88,
+        96,
+        108,
+        120,
+        132,
+        132,
+        128,
+        120
+      ],
+      [
+        85,
+        95,
+        110,
+        125,
+        140,
+        140,
+        135,
+        125
+      ]
+    ]
+  }
+}

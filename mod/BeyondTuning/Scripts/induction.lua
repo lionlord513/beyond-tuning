@@ -27,7 +27,7 @@ return function(T)
  function I.configure(r)
   local hardware=I.turbos(r.motor);local keep={}
   for _,x in ipairs(hardware)do
-   local address=x.actor:GetAddress();keep[address]=true;local gain=(r.tune.turbos[x.key]or 100)/100;local rec=I.turboRecords[address]
+   local address=x.actor:GetAddress();keep[address]=true;local gain=(r.tune.turbos[x.key]or r.tune.turboDefault or 100)/100;local rec=I.turboRecords[address]
    if rec and (not same(rec.actor,x.actor)or not same(x.actor.TorqueMultiplierCurve,rec.proxy))then I.proxies[rec.address]=nil;rec=nil;I.turboRecords[address]=nil end
    if gain~=1 and not rec then
     local base=x.actor.TorqueMultiplierCurve;assert(valid(base),'Turbo curve unavailable')
@@ -53,7 +53,7 @@ return function(T)
  function I.tick()
   I.install();local p=T.vehicle.player();if not valid(p)then return end;local now=game:GetTimeSeconds(p)
   if now>=(I.nextScan or 0)then I.nextScan=now+.5
-   for _,r in pairs(T.vehicle.records)do if valid(r.actor)and valid(r.motor)and r.actor:HasAuthority()and same(T.vehicle.motor(r.actor),r.motor)then I.configure(r)end end
+   for _,r in pairs(T.vehicle.records)do if(r.configured or T.ui and T.ui.opened and T.vehicle.current==r)and valid(r.actor)and valid(r.motor)and(r.actor:HasAuthority()or T.network and T.network.connected)and same(T.vehicle.motor(r.actor),r.motor)then I.configure(r)end end
   end
   if I.nitrous then I.nitrous.tick(now)end
  end

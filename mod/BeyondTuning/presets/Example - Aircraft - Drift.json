@@ -1,0 +1,72 @@
+{
+  "format": "BeyondTuning",
+  "schema": 1,
+  "name": "Aircraft - Drift",
+  "engine": "BP_Plane_Motor_C",
+  "category": "Drift",
+  "description": "SLIDY-style native drift assistance, rear drive, broad steering and a progressive torque map. Short gears sustain wheelspin; 50% nitrous favors duration. Handling applies to a wheeled car fitted with this engine, not aircraft flight controls.",
+  "tune": {
+    "power": 110,
+    "gearing": 105,
+    "limiter": 105,
+    "shift": 80,
+    "response": 110,
+    "nitrous": 50,
+    "turbos": {},
+    "turboDefault": 105,
+    "handling": "drift",
+    "gearshape": "drift",
+    "map": [
+      [
+        94,
+        96,
+        99,
+        102,
+        104,
+        105,
+        104,
+        102
+      ],
+      [
+        88,
+        92,
+        98,
+        104,
+        108,
+        110,
+        108,
+        104
+      ],
+      [
+        82,
+        88,
+        97,
+        106,
+        112,
+        115,
+        112,
+        106
+      ],
+      [
+        76,
+        84,
+        96,
+        108,
+        116,
+        120,
+        116,
+        108
+      ],
+      [
+        70,
+        80,
+        95,
+        110,
+        120,
+        125,
+        120,
+        110
+      ]
+    ]
+  }
+}

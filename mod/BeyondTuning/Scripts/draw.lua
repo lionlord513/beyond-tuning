@@ -51,6 +51,7 @@ return function(T)
     if not data then text(c,why,68,160,white,.9);return end
     -- UMG owns the texture reference; a Lua userdata alone is not a GC root.
     text(c,'Drag to orbit / installed engine and attached parts',50,8,white,.8)
+    if t.heat then text(c,('Engine temperature %.1f C'):format(t.heat),50,397,accent,.75)end
    elseif mode=='Live'then
     local history=V.history;local channels={{'rpm',t.redline or 8000,accent},{'speed',200,{R=.95,G=.8,B=.1,A=1}},{'throttle',1,{R=.2,G=.95,B=.4,A=1}}}
     for _,d in ipairs(channels)do for i=2,#history do local x1=48+(i-2)*620/149;local x2=48+(i-1)*620/149;local y1=374-math.min(1,(history[i-1][d[1]]or 0)/d[2])*344;local y2=374-math.min(1,(history[i][d[1]]or 0)/d[2])*344;line(c,x1,y1,x2,y2,d[3],1.5)end end

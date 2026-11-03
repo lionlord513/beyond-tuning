@@ -1,5 +1,17 @@
 # Validation
 
+## Version 1.1 additions
+
+- All scripts compile and the original 31 policy/JSON checks pass. All 42 example files validate as exactly one Drift/Race pair for each of 21 catalog engines.
+- Native Drift / Race / Stock transitions check real drift assist and grip restoration. Gear arrays retain their native size.
+- Laptop purchase, imported meshes, convex collision physics, native pickup/release, folding, screen interaction, native desktop, driver-seat opening, frozen PNG output and native car mounting were exercised in a disposable solo world.
+- A cold native-save reload restores the original laptop identity and car mounting. The tuning journal is separate from native item saving.
+- A mounted idle laptop reports every component tick disabled after capture completes. A 10,000-update mock check makes no engine calls, captures or file accesses from the idle laptop update path. This is a behavior check, not a promise of literally zero rendering/physics cost or a measured FPS benchmark.
+- The existing native reliable RPCs pass local hello, tune-request, host-side persistence and saved-acknowledgement checks. Full operation across separate host/client PCs, packet loss and reconnects has not been tested. The implementation includes replicated persistent identity, late-join record distribution and driver telemetry while an app watches that car.
+- Heat colors use actual engine temperature; no additional engine capture runs just to update heat color. A frozen laptop screen is local to each player's installation; other players see their own last image or the static wallpaper.
+
+Run `lua tests/laptop_idle.lua` for the idle behavior check. The native QA harness and disposable save files are excluded from the release.
+
 Validated on Windows x64 with Drive Beyond Horizons build 26106988, the installed UE4SS runtime and Beyond Apocalypse 1.0.10. Runtime checks used a separate solo QA world. No player save was used as a test fixture.
 
 ## Automated checks
@@ -31,6 +43,6 @@ Build `tests/native.c` with Zig's Windows x64 C compiler, `-municode`, and the s
 
 ## Boundaries
 
-Application is host-only. A separate multiplayer host/client session and every possible vehicle/mod combination have not been tested. Other mods which replace the same torque or gear values can conflict. Future game or loader updates may require adapter changes. Draft edits are temporary until Apply or Save preset; restoring stock intentionally resets the active calibration.
+The 1.0 checks below predate client tuning support. A separate multiplayer host/client session and every possible vehicle/mod combination have not been tested. Other mods which replace the same torque or gear values can conflict. Future game or loader updates may require adapter changes. Draft edits are temporary until Apply or Save preset; restoring stock intentionally resets the active calibration.
 
 The engine preview uses GPU scene capture and runtime contour conversion. It does not read unavailable CPU mesh buffers. Gear updates edit existing native entries rather than marshal replacement gear arrays through the loader.

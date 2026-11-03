@@ -1,0 +1,72 @@
+{
+  "format": "BeyondTuning",
+  "schema": 1,
+  "name": "C18 - Drift",
+  "engine": "BP_C15_Motor_C",
+  "category": "Drift",
+  "description": "SLIDY-style native drift assistance, rear drive, broad steering and a progressive torque map. Short gears sustain wheelspin; 50% nitrous favors duration.",
+  "tune": {
+    "power": 135,
+    "gearing": 120,
+    "limiter": 105,
+    "shift": 80,
+    "response": 110,
+    "nitrous": 50,
+    "turbos": {},
+    "turboDefault": 105,
+    "handling": "drift",
+    "gearshape": "drift",
+    "map": [
+      [
+        99,
+        102,
+        106,
+        108,
+        107,
+        105,
+        101,
+        98
+      ],
+      [
+        98,
+        104,
+        112,
+        116,
+        114,
+        110,
+        102,
+        96
+      ],
+      [
+        97,
+        106,
+        118,
+        124,
+        121,
+        115,
+        103,
+        94
+      ],
+      [
+        96,
+        108,
+        124,
+        132,
+        128,
+        120,
+        104,
+        92
+      ],
+      [
+        95,
+        110,
+        130,
+        140,
+        135,
+        125,
+        105,
+        90
+      ]
+    ]
+  }
+}

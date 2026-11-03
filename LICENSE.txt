@@ -5,6 +5,11 @@ releases for personal gameplay, and to create and share tuning preset JSON files
 Source is provided for inspection. No other redistribution or sublicensing
 permission is granted by this notice. Contact the repository owner for permission.
 
+Exception: the imported laptop model and original laptop texture, including
+their converted mesh data, are licensed by ZwiebelGames under Creative Commons
+Attribution 4.0 International. This notice does not restrict that license.
+See mod/BeyondTuning/assets/laptop/ATTRIBUTION.txt for source and attribution.
+
 Game assets, Unreal Engine and dependencies retain their respective ownership
 and terms. No game meshes or proprietary companion code are included.
 

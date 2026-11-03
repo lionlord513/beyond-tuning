@@ -1,0 +1,72 @@
+{
+  "format": "BeyondTuning",
+  "schema": 1,
+  "name": "UAZ - Race",
+  "engine": "BP_UAZ_Motor_C",
+  "category": "Race",
+  "description": "Maximum engine output and fitted turbo contribution, fast shifts, stronger launch gears and taller top gears. Extra grip and lower rolling loss. 200% nitrous favors force.",
+  "tune": {
+    "power": 135,
+    "gearing": 100,
+    "limiter": 115,
+    "shift": 60,
+    "response": 130,
+    "nitrous": 200,
+    "turbos": {},
+    "turboDefault": 200,
+    "handling": "race",
+    "gearshape": "race",
+    "map": [
+      [
+        108,
+        108,
+        108,
+        108,
+        108,
+        108,
+        108,
+        108
+      ],
+      [
+        116,
+        116,
+        116,
+        116,
+        116,
+        116,
+        116,
+        116
+      ],
+      [
+        124,
+        124,
+        124,
+        124,
+        124,
+        124,
+        124,
+        124
+      ],
+      [
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132
+      ],
+      [
+        140,
+        140,
+        140,
+        140,
+        140,
+        140,
+        140,
+        140
+      ]
+    ]
+  }
+}

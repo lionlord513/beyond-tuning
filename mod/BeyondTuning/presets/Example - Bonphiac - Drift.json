@@ -1,0 +1,72 @@
+{
+  "format": "BeyondTuning",
+  "schema": 1,
+  "name": "Bonphiac - Drift",
+  "engine": "BP_Pontiac_Motor_C",
+  "category": "Drift",
+  "description": "SLIDY-style native drift assistance, rear drive, broad steering and a progressive torque map. Short gears sustain wheelspin; 50% nitrous favors duration.",
+  "tune": {
+    "power": 115,
+    "gearing": 110,
+    "limiter": 105,
+    "shift": 80,
+    "response": 110,
+    "nitrous": 50,
+    "turbos": {},
+    "turboDefault": 105,
+    "handling": "drift",
+    "gearshape": "drift",
+    "map": [
+      [
+        95,
+        97,
+        100,
+        104,
+        105,
+        104,
+        102,
+        100
+      ],
+      [
+        90,
+        94,
+        100,
+        107,
+        110,
+        109,
+        105,
+        100
+      ],
+      [
+        85,
+        91,
+        100,
+        111,
+        115,
+        113,
+        107,
+        100
+      ],
+      [
+        80,
+        88,
+        100,
+        114,
+        120,
+        118,
+        110,
+        100
+      ],
+      [
+        75,
+        85,
+        100,
+        118,
+        125,
+        122,
+        112,
+        100
+      ]
+    ]
+  }
+}
