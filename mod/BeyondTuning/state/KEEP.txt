@@ -1,0 +1,2 @@
+Beyond Tuning stores settings, save-specific tuning records and temporary preset transfers here.
+Keep this folder. These records belong to the player and must survive mod updates.

@@ -1,0 +1,11 @@
+Copyright (c) 2026 lionlord513. All rights reserved.
+
+Permission is granted to download, install and use official Beyond Tuning
+releases for personal gameplay, and to create and share tuning preset JSON files.
+Source is provided for inspection. No other redistribution or sublicensing
+permission is granted by this notice. Contact the repository owner for permission.
+
+Game assets, Unreal Engine and dependencies retain their respective ownership
+and terms. No game meshes or proprietary companion code are included.
+
+The mod is provided as-is, without warranty.

@@ -1,0 +1,27 @@
+{
+  "Id": "beyondtuning",
+  "Name": "Beyond Tuning",
+  "Version": "1.0.0",
+  "Channel": "stable",
+  "Description": "Standalone Car Tuning computer app: real engine calibration, individual turbos, optional BA nitrous, permanent presets and rotatable engine hologram.",
+  "Changelog": "Initial release: native Car Tuning app, working engine/gearbox calibration, independent turbo boost, optional BA nitrous injection, transparent rotatable engine view, permanent presets and save recovery.",
+  "Dependencies": [
+    "UE4SS"
+  ],
+  "LoadAfter": [
+    "BeyondApocalypse"
+  ],
+  "Preserve": [
+    "DriveBeyondHorizons/Binaries/Win64/ue4ss/Mods/BeyondTuning/state",
+    "DriveBeyondHorizons/Binaries/Win64/ue4ss/Mods/BeyondTuning/presets"
+  ],
+  "Update": {
+    "Provider": "github",
+    "Repository": "lionlord513/beyond-tuning",
+    "TagPrefix": "v",
+    "AssetPattern": "BeyondTuning-{version}-Nexus.zip",
+    "ManifestAsset": "bmm-mod.json",
+    "Sha256Asset": "SHA256SUMS.txt",
+    "Kind": "mod"
+  }
+}
