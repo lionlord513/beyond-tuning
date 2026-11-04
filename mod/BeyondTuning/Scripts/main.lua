@@ -1,5 +1,5 @@
 local root=debug.getinfo(1,'S').source:sub(2):gsub('\\','/'):match('^(.*)/Scripts/[^/]+$')
-local T={version='1.2.0',root=assert(root),queue={},message='Sit in a car, then open Car Tuning on a computer.',active=true}
+local T={version='1.2.1',root=assert(root),queue={},message='Sit in a car, then open Car Tuning on a computer.',active=true}
 function T.valid(o)return o and o:IsValid()end
 function T.status(s)local text=tostring(s);print('[Beyond Tuning] '..text..'\n');T.message=text:gsub('^.-:%d+: ',''):match('[^\r\n]+'):sub(1,165);if T.ui then T.ui.refreshStatus=true end end
 function T.enqueue(fn)T.queue[#T.queue+1]=fn end
@@ -7,6 +7,7 @@ T.json=dofile(root..'/Scripts/json.lua');T.policy=dofile(root..'/Scripts/policy.
 T.storage=dofile(root..'/Scripts/storage.lua')(root,T.json,T.policy)
 T.handling=dofile(root..'/Scripts/handling.lua')(T)
 T.draft=T.policy.stock();T.vehicle=dofile(root..'/Scripts/vehicle.lua')(T)
+T.delivery=dofile(root..'/Scripts/delivery.lua')(T)
 T.induction=dofile(root..'/Scripts/induction.lua')(T)
 T.draw=dofile(root..'/Scripts/draw.lua')(T)
 T.ui=dofile(root..'/Scripts/ui.lua')(T)
@@ -31,5 +32,6 @@ end)
 RegisterLoadMapPreHook(function()T.resetRequested=true end)
 RegisterKeyBind(Key.ESCAPE,function()ExecuteInGameThread(function()if T.laptop.active then T.laptop.close()elseif T.ui.opened then T.ui.close()end end)end)
 _G.BeyondTuning=T
+ModRef:SetSharedVariable('BT_LaptopFactory',1)
 print('[Beyond Tuning] '..T.version..' loaded\n')
 return T

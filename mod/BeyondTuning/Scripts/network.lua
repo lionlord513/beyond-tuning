@@ -80,11 +80,15 @@ return function(T)
   elseif p.op=='telemetry'then
    local a=valid(pc.Vehicle)and pc.Vehicle or peer.driven;local m=valid(a)and V.motor(a)
    if valid(m)and V.id(a,m)==p.id then N.acceptTelemetry(p.id,p.data)end
+  elseif p.op=='localLaptopGrant'then
+   assert(pc:IsLocalPlayerController() and type(p.token)=='number' and p.token==ModRef:GetSharedVariable('BT_LocalLaptopGrant'),'Local tool request required')
+   ModRef:SetSharedVariable('BT_LocalLaptopGrant',nil)
+   N.send(pc,{op='notice',message=T.laptop.spawn(pc,T.delivery.spot(pc))})
   elseif p.op=='buyNitrous'then
    assert(now()>=(peer.orderAt or 0),'Order pending');peer.orderAt=now()+.5
    local service=T.induction.nitrous
    assert(service.buy,'Update Beyond Apocalypse to order here')
-   N.send(pc,{op='notice',message=service.buy(pc,p.variant)})
+   N.send(pc,{op='delivery',message=service.buy(pc,p.variant)})
   elseif p.op=='laptop'then assert(T.laptop,'Laptop unavailable');T.laptop.request(pc,p)
   else error('Unknown tuning message')end
  end
@@ -98,7 +102,10 @@ return function(T)
    if not host()then for _,r in pairs(V.records)do V.restore(r)end;S.records={}end
    N.connected=true;N.helloAt=now()+30;N.world=p.world;S.world=p.world
   elseif p.op=='record'then refreshRecord(p)
-  elseif p.op=='error'then N.pending=nil;T.status('Host: '..tostring(p.message))
+  elseif p.op=='delivery'then T.delivery.pending=nil;T.delivery.note(p.message)
+  elseif p.op=='error'then
+   N.pending=nil
+   if T.delivery.pending then T.delivery.pending=nil;T.delivery.note(p.message)else T.status('Host: '..tostring(p.message))end
   elseif p.op=='telemetry'then N.acceptTelemetry(p.id,p.data)
   elseif p.op=='stream'then N.stream=p.id;N.streamUntil=now()+5
   elseif p.op=='nitrousForce'then

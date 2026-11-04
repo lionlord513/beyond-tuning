@@ -7,6 +7,8 @@ return function(T,H,log)
  N.visuals=dofile(root..'/Scripts/nitrous/visuals.lua')(root,valid)
  N.effects=dofile(root..'/Scripts/nitrous/effects.lua')(H,valid)
  N.journal=dofile(root..'/Scripts/nitrous/journal.lua')(T,log)
+ N.mounts=dofile(root..'/Scripts/nitrous/mounts.lua')(T,N)
+ N.journal.onLoad=N.mounts.load;N.journal.onCapture=N.mounts.capture
  local game=StaticFindObject('/Script/Engine.Default__GameplayStatics');local scene=StaticFindObject('/Script/Engine.SceneComponent')
  local carClass=StaticFindObject('/Script/VehicleSystemPlugin.VehicleSystemBase')
  local path='/Game/BP/Items/Movable/TankContainer/GasBarrelGaz_2.GasBarrelGaz_2_C'
@@ -49,18 +51,41 @@ return function(T,H,log)
    a.OvverideMass=d.dryMass;a.BaseMass=d.dryMass
    -- Fill exactly once when creating a new bottle. Restores never refill it.
    if fill and not saved then a.ItemTankComponent:EmptyTank();N.fluid.set(a.ItemTankComponent,d.litres,H.GetPlayer())end
+   if not fill then N.mounts.quantity(a,guid)end
    a.ItemTankComponent:UpdateOwnerWeight();N.journal.state.bottle[guid]=id;a:FlushNetDormancy();a:ForceNetUpdate()
   else a.ItemTankComponent.MaxQuantity=d.litres end
   r={actor=a,key=key,def=d,mark=mark};N.items[key]=r;N.visuals.apply(r,d);return r
  end
- function N.spawn(p,id,at)
+ function N.discard(a)
+  if not valid(a) then return end
+  local id=N.guid(a)
+  if id then N.journal.state.bottle[id]=nil end
+  N.items[a:GetFullName()]=nil
+  a:K2_DestroyActor()
+ end
+ function N.spawn(p,id,at,savedGuid)
   assert(valid(p)and p:HasAuthority(),'Nitrous spawning requires the host')
   N.journal.load(game:GetGameInstance(p).MainSaveGame);N.journal.writable();assert(N.fluid.install())
   if not at then local q,f=p:K2_GetActorLocation(),p:GetActorForwardVector();at={X=q.X+f.X*180,Y=q.Y+f.Y*180,Z=q.Z+10}end
   local tr={Translation=at,Rotation=identity.Rotation,Scale3D=identity.Scale3D}
   local a=game:BeginDeferredActorSpawnFromClass(p,LoadAsset(path),tr,1,nil,0);assert(valid(a),'Native bottle could not spawn')
-  local ok,e=pcall(function()game:FinishSpawningActor(a,tr,0);if not N.guid(a)then a.GuidUnique=StaticFindObject('/Script/Engine.Default__KismetGuidLibrary'):NewGuid()end;N.adopt(a,id,true)end)
-  if not ok then a:K2_DestroyActor();error(e)end;return a
+  local old=savedGuid and N.journal.state.bottle[savedGuid]
+  local ok,e=pcall(function()
+   local guid
+   if savedGuid then
+    guid={};local i=0
+    for word in savedGuid:gmatch('(%x+)')do
+     i=i+1;assert(#word==8 and i<=4,'Invalid saved bottle ID');local n=tonumber(word,16)
+     guid[('ABCD'):sub(i,i)]=n>=2147483648 and n-4294967296 or n
+    end
+    assert(i==4,'Invalid saved bottle ID');a.GuidUnique=guid
+   end
+   game:FinishSpawningActor(a,tr,0)
+   if guid then a.GuidUnique=guid;a.ItemTankComponent:EmptyTank()
+   elseif not N.guid(a)then a.GuidUnique=StaticFindObject('/Script/Engine.Default__KismetGuidLibrary'):NewGuid()end
+   N.adopt(a,id,not savedGuid)
+  end)
+  if not ok then N.discard(a);if savedGuid then N.journal.state.bottle[savedGuid]=old end;error(e)end;return a
  end
  function N.parent(a)
   if not bottle(a)then return end
@@ -73,7 +98,7 @@ return function(T,H,log)
  end
  function N.held(pc)
   local p=valid(pc)and pc.PlayerControlled
-  if not valid(p)or p.BP_PlayerStats.IsDead or p.BP_PlayerStats.IsDying or H.IsPauseMenu(pc)or pc.bShowMouseCursor or T.ui.opened then return false end
+  if not valid(p) or not valid(p.BP_PlayerStats) or p.BP_PlayerStats.IsDead or p.BP_PlayerStats.IsDying or H.IsPauseMenu(pc)or pc.bShowMouseCursor or T.ui.opened then return false end
   if valid(pc.HUD)and valid(pc.HUD.ChatUI)and pc.HUD.ChatUI.TypeInChat then return false end
   return pc:IsInputKeyDown({KeyName=FName('LeftShift')})or pc:IsInputKeyDown({KeyName=FName('RightShift')})
  end
@@ -181,7 +206,7 @@ return function(T,H,log)
   N.net.input(now)
   if now<N.nextAt then return end
   local dt=N.last and math.min(.15,math.max(0,now-N.last))or .1;N.last=now;N.nextAt=now+.1
-  N.discover(now);N.rebuild()
+  N.discover(now);N.rebuild();if p:HasAuthority()then N.mounts.tick(now)end
   for _,r in pairs(N.cars)do
    local a=r.actor
    if a:HasAuthority()then
@@ -214,7 +239,7 @@ return function(T,H,log)
  end
  function N.reset()
   for _,r in pairs(N.cars)do if live(r)then N.stop(r);N.effects.clear(r)end end
-  N.items={};N.cars={};N.incoming={};N.requests={};aircraft={};N.seeded=nil;N.nextAt=0;N.visualAt=0;N.nextLoot=0;N.last=nil;N.errorUntil=nil;N.journal.reset();N.visuals.reset();N.net.reset()
+  N.items={};N.cars={};N.incoming={};N.requests={};aircraft={};N.seeded=nil;N.nextAt=0;N.visualAt=0;N.nextLoot=0;N.last=nil;N.errorUntil=nil;N.journal.reset();N.mounts.reset();N.visuals.reset();N.net.reset()
  end
  ModRef:SetSharedVariable('BT_NitrousReady',true)
  NotifyOnNewObject(path,function(a)if #N.incoming<512 then N.incoming[#N.incoming+1]={actor=a,tries=0}end end)

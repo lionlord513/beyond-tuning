@@ -33,17 +33,27 @@ return function(T)
  function N.buy(pc,id)
   assert(T.valid(pc) and pc:HasAuthority() and T.valid(pc.PlayerControlled),'Host unavailable')
   local d=assert(type(id)=='number' and N.catalog[id],'Unknown bottle')
-  local paid={}
-  pc:TryPurchase(d.price,false,paid)
-  assert(paid.Success,'Not enough money')
-  local ok,actor=pcall(N.spawn,pc.PlayerControlled,id)
-  if not ok then pc:AddMoney(d.price);error(actor) end
-  return d.name..' delivered'
+  return T.delivery.purchase(pc,d.price,function(at)
+   local actor=N.spawn(pc.PlayerControlled,id,at)
+   local ok,err=pcall(function()
+    T.delivery.place(actor,actor.TankMesh,at)
+    local r=N.items[actor:GetFullName()]
+    assert(r and T.valid(r.visual) and r.visual:IsVisible() and N.fluid.quantity(actor.ItemTankComponent)>.001,'Bottle unavailable')
+   end)
+   if not ok then N.discard(actor);error(err) end
+   return d.name..' delivered beside you'
+  end)
  end
  function N.order(id)
   local pc=T.vehicle.pc()
-  if pc:HasAuthority() then T.status(N.buy(pc,id))
-  else T.network.call({op='buyNitrous',variant=id}) end
+  if pc:HasAuthority() then
+   local ok,result=pcall(N.buy,pc,id)
+   T.delivery.note(ok and result or tostring(result):gsub('^.-:%d+: ',''))
+  else
+   assert(T.network.connected,'Host unavailable')
+   T.delivery.pending=true;T.delivery.note('Ordering bottle…')
+   T.network.call({op='buyNitrous',variant=id})
+  end
  end
  return N
 end

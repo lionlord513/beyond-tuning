@@ -113,28 +113,26 @@ return function(T)
   if S.read(path,4*1024*1024)then local tex=StaticFindObject('/Script/Engine.Default__KismetRenderingLibrary'):ImportFileAsTexture2D(a,path);if valid(tex)then r.screenMaterial:SetTextureParameterValue(FName('SlateUI'),tex)end end
   return r
  end
- function L.buy(pc)
-  assert(valid(pc)and pc:HasAuthority(),'Laptop purchase must be processed by the host')
+ function L.spawn(pc,at)
+  assert(valid(pc)and pc:HasAuthority(),'Host unavailable')
   assert(S.world,'Save your world before ordering a laptop')
   local p=pc.PlayerControlled;assert(valid(p),'Player unavailable')
-  local paid={};pc:TryPurchase(L.price,false,paid);assert(paid.Success,'The laptop costs $250')
-  local a
+  local a,final
   local ok,e=pcall(function()
-   local at=p:K2_GetActorLocation();local f=p:GetActorForwardVector()
-   local tr={Translation={X=at.X+f.X*100,Y=at.Y+f.Y*100,Z=at.Z+35},Rotation={X=0,Y=0,Z=0,W=1},Scale3D={X=1,Y=1,Z=1}}
+   local tr={Translation=at,Rotation={X=0,Y=0,Z=0,W=1},Scale3D={X=1,Y=1,Z=1}}
    a=game:BeginDeferredActorSpawnFromClass(p,LoadAsset(carrierPath),tr,1,nil,0);assert(valid(a),'Laptop spawn failed')
    local id=actorId(a);configureCarrier(a,id);game:FinishSpawningActor(a,tr,0)
-   a:K2_SetActorLocation(tr.Translation,false,{},true)
-   a.RootMeshComponent:K2_SetWorldLocation(tr.Translation,false,{},true)
-   a.RootMeshComponent:SetPhysicsLinearVelocity({X=0,Y=0,Z=0},false,FName('None'))
-   a:ForceRepStateItem()
+   T.delivery.place(a,a.RootMeshComponent,at)
    -- BeginPlay assigns the final persistent GUID.
-   local final=actorId(a);mark(a,final)
-   L.data[final]={closed=false};L.persist();L.skin(a,final);broadcast(final)
+   final=actorId(a);mark(a,final)
+   L.data[final]={closed=false};L.skin(a,final);L.persist();broadcast(final)
    a:FlushNetDormancy();a:ForceNetUpdate()
   end)
-  if not ok then if valid(a)then a:K2_DestroyActor()end;pc:AddMoney(L.price);error(e)end
-  return 'Laptop delivered'
+  if not ok then if valid(a)then a:K2_DestroyActor()end;if final then L.data[final]=nil;pcall(L.persist)end;error(e)end
+  return 'Tuner Laptop delivered beside you'
+ end
+ function L.buy(pc)
+  return T.delivery.purchase(pc,L.price,function(at)return L.spawn(pc,at)end)
  end
  function L.order()
   local pc=V.pc();if pc:HasAuthority()then T.status(L.buy(pc))else assert(N.connected,'Host needs Beyond Tuning');N.call({op='laptop',action='buy'})end

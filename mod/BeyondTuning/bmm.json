@@ -1,10 +1,10 @@
 {
   "Id": "beyondtuning",
   "Name": "Beyond Tuning",
-  "Version": "1.2.0",
+  "Version": "1.2.1",
   "Channel": "stable",
-  "Description": "Car Tuning, a portable laptop, standalone nitrous and multiplayer tunes for Drive Beyond Horizons.",
-  "Changelog": "Visible native laptop pickup and wider mount selection. Nitrous bottles, loot, buying and boost now belong to Beyond Tuning. Shorter tuner messages.",
+  "Description": "Tune your car, fit nitrous and take a laptop on the road.",
+  "Changelog": "Fixed nitrous orders failing to arrive.\nFixed mounted bottles losing their attachment or remaining nitrous on reload.",
   "Dependencies": [
     "UE4SS"
   ],

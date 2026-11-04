@@ -29,7 +29,7 @@ for _,ratio in ipairs({25,50,100,200}) do
 end
 local guid='11111111:22222222:33333333:44444444'
 local save={SaveGameMetadata={key='world-rev1',world='world'},IsA=function()return true end}
-J.load(nil);J.state.bottle[guid]=6;J.state.site['Garage@1,2,3']=true;J.capture(save)
+J.load(nil);assert(not J.ready);J.load({SaveGameMetadata={world='world'}});J.state.bottle[guid]=6;J.state.site['Garage@1,2,3']=true;J.capture(save)
 J.state.bottle[guid]=1;assert(not pcall(J.capture,save),'A save revision was silently overwritten')
 J.reset();J.load(save);assert(J.state.bottle[guid]==6 and J.state.site['Garage@1,2,3'])
 J.reset();J.load({SaveGameMetadata={key='world-old',world='world'}});assert(not next(J.state.bottle),'Older save inherited future variants')

@@ -122,7 +122,8 @@ return function(T)
    U.bottleChoice=U.bottleChoice or 1
    local d=I.nitrous.catalog[U.bottleChoice]
    button(p,d.name..'  >',42,282,400,44,function()U.bottleChoice=U.bottleChoice%6+1;refresh()end)
-   button(p,'Buy / $'..d.price,457,282,210,44,function()I.nitrous.order(d.id)end,true)
+   U.buyBottle=button(p,'Buy / $'..d.price,457,282,210,44,function()I.nitrous.order(d.id)end,true)
+   U.orderNote=label(p,T.delivery.message or '',42,331,1290,27,16,U.accent)
   end
   label(p,'Hold Shift to boost while driving.',705,291,625,28,17,U.muted)
   label(p,'INSTALLED TURBOS',42,365,800,32,20,U.accent)
@@ -232,7 +233,11 @@ return function(T)
  end
  function U.update()
   if not valid(U.ui)then return end
-  if U.refreshStatus and valid(U.statusText)then U.statusText:SetText(FText(T.message));U.refreshStatus=false end
+  if U.refreshStatus and valid(U.statusText)then
+   U.statusText:SetText(FText(T.message))
+   if U.menu=='Boost' and valid(U.orderNote)then U.orderNote:SetText(FText(T.delivery.message or ''))end
+   U.refreshStatus=false
+  end
   if U.dragging then
    S.native('pointer');local value=S.read(T.root..'/state/pointer.txt')or'';local x,y,down=value:match('^(-?%d+) (-?%d+) (%d)$');x,y=tonumber(x),tonumber(y)
    if not x or down~='1'then U.dragging=false;U.lastPointer=nil

@@ -1,5 +1,9 @@
 # Validation
 
+## Version 1.2.1
+
+On build 26106988, the Boost purchase button delivered a full Stage II 10 L bottle within reach and charged $4,400. A cold reload retained the original car ID, mounted bottle ID and 3.75 L. A simulated missing bottle was recovered once at its saved mount with 1.25 L. With both gameplay mods and the local host tools enabled, the host menu delivered a laptop at no charge. The idle laptop regression completed 10,000 updates without engine calls. Two separate networked PCs were not used for these checks.
+
 ## Version 1.2.0
 
 A disposable copy of a player's autosave loaded the same world and vehicles. A newly delivered laptop was mounted there. Nine traces across its folded surface selected the laptop, including the corners. The native Remove action released it. After Take, the visible native mesh stayed about one metre from the camera and appeared in a capture from the player's viewpoint. Dropping it restored world interaction and its open prompt read Use laptop.

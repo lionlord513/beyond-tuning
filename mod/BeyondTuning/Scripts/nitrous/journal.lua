@@ -20,8 +20,11 @@ return function(T,log)
   end;return state
  end
  function J.load(save)
-  if J.ready then return end;J.ready=true;J.state={bottle={},site={}};J.error=nil
-  if not valid(save)then return end;local k,world=T.storage.saveKey(save);J.world=world;if not k then return end
+  if J.ready or not valid(save)then return end
+  local k,world=T.storage.saveKey(save);if not world then return end
+  J.ready=true;J.world=world;J.state={bottle={},site={}};J.error=nil
+  if J.onLoad then J.onLoad(k)end
+  if not k then return end
   local bytes=T.storage.read(path(k),4*1024*1024)
   if not bytes then
    for _,mod in ipairs({'BeyondApocalypse','BasicM4'}) do
@@ -38,6 +41,7 @@ return function(T,log)
   if not J.ready or not valid(save)or not save:IsA(StaticFindObject('/Script/DriveBeyondHorizons.DBHSaveGame'))then return end
   J.writable();local k,world=T.storage.saveKey(save);assert(k,'Native save has no revision identity')
   if J.world and J.world~=world then return end;J.world=world
+  if J.onCapture then J.onCapture(k)end
   local target=path(k);local bytes=J.encode(J.state);local old=io.open(target,'rb')
   if old then local before=old:read('*a');old:close();assert(before==bytes,'Native save reused a nitrous revision');return end
   local f=assert(io.open(target..'.tmp','wb'));assert(f:write(bytes));assert(f:close());assert(os.rename(target..'.tmp',target))
