@@ -1,3 +1,10 @@
+# Beyond Tuning 1.1.1
+
+- Right-click the laptop lid/screen to open or close the lid.
+- Left-click a closed laptop to pick up its physical body; only the open screen starts the computer.
+- Closing the lid ends an active desktop. Host-side and pending-open checks prevent closed-lid use in multiplayer.
+- Updated interaction prompts and Help. No idle polling or rendering added.
+
 # Beyond Tuning 1.1.0
 
 - 42 editable Drift and Race examples covering all 21 engine catalog types, with the current engine's pair under File > Presets.

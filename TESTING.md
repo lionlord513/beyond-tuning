@@ -1,5 +1,9 @@
 # Validation
 
+## Version 1.1.1 controls
+
+Focused callback checks cover closed-lid left-click pickup, right-click open/close, ignored button-release events, open-screen access, forwarding pickup to the native physical body, and closed-lid rejection at both local and host entry points. The idle-update and existing policy checks pass. This patch did not rerun the full native-world suite below.
+
 ## Version 1.1 additions
 
 - All scripts compile and the original 31 policy/JSON checks pass. All 42 example files validate as exactly one Drift/Race pair for each of 21 catalog engines.

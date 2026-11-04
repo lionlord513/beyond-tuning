@@ -10,7 +10,7 @@ Built using the computer-window and input-surface approach established by Beyond
 
 Windows x64, Drive Beyond Horizons build 26106988, and a compatible UE4SS installation are required. Developed alongside Beyond Apocalypse 1.0.10. Beyond Apocalypse is optional; when installed, Beyond Mod Manager loads it first.
 
-**Beyond Mod Manager:** import `BeyondTuning-1.1.0-Nexus.zip`, inspect the preview, and install. The manifest supplies identity, version, load order, GitHub updates and preservation rules for your presets and settings.
+**Beyond Mod Manager:** import `BeyondTuning-1.1.1-Nexus.zip`, inspect the preview, and install. The manifest supplies identity, version, load order, GitHub updates and preservation rules for your presets and settings.
 
 **Manual:** exit the game and extract the ZIP into the main `Drive Beyond Horizons` game folder. The resulting path is `DriveBeyondHorizons/Binaries/Win64/ue4ss/Mods/BeyondTuning/Scripts/main.lua`. The included `enabled.txt` enables the mod. This package does not include or replace UE4SS.
 
@@ -57,8 +57,9 @@ Nitrous examples use 50% injection for Drift and 200% for Race. Those values tak
 
 Open **Car Tuning > File > Laptop / Buy for $250**. The laptop is delivered beside you using in-game money. It uses ZwiebelGames' imported, textured folding laptop model: 2,012 triangles, with a separate base, lid and screen.
 
-- Click the **screen** to open the native desktop, including other installed computer apps.
-- Click the **bezel/lid** to open or close it. This does not launch the desktop.
+- **Left-click the open screen** to open the native desktop, including other installed computer apps. A closed laptop cannot open the desktop.
+- **Right-click the bezel/lid** to open or close it.
+- **Left-click the closed laptop** to pick it up. Left-clicking the open lid/bezel also picks up the body.
 - Pick up the base and use the game's normal attachment controls to mount the bottom on a vehicle or other object.
 - A mounted laptop can be used from the driver seat. **Esc** or **Return to laptop** exits the desktop and freezes its last image. Clicking the screen resumes the workspace.
 - Save your game to retain the physical laptop and its attachment. Its lid state and frozen display are stored in the mod's preserved state folder.

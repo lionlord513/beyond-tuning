@@ -81,14 +81,18 @@ return function(T)
   h:SetActorRelativeScale3D({X=1,Y=1,Z=1})
   r.helper=h;r.helperName=h:GetFullName();L.helpers[h:GetAddress()]=r;L.transient[h:GetAddress()]=r.helperName
   if valid(h.ItemSaver)then h.ItemSaver.SaveOnDistance=false end
-  -- Screen and bezel use different collision components. Only the first opens
-  -- the desktop; the lid/bezel is a physical open/close control.
+  -- Left-click uses only the open screen; the lid forwards pickup to the body.
+  -- Right-click on either interaction surface opens/closes the physical lid.
   r.lidHit=box(h,h.RootComponent,{X=.023,Y=.40,Z=.34},{X=8.5,Y=0,Z=15.5})
   r.screenHit=box(h,h.RootComponent,{X=.024,Y=.313,Z=.237},{X=8.1,Y=0,Z=16.4})
   r.lidHit:K2_SetRelativeRotation({Pitch=-29,Yaw=0,Roll=0},false,{},true)
   r.screenHit:K2_SetRelativeRotation({Pitch=-29,Yaw=0,Roll=0},false,{},true)
  end
  function L.fold(r,closed)
+  if closed then
+   if L.active==r then L.close()end
+   if L.waiting and L.waiting.id==r.id then L.waiting=nil end
+  end
   visual.fold(r,closed)
   if valid(r.screenHit)then r.screenHit:SetCollisionEnabled(closed and 0 or 1)end
   if valid(r.actor)and r.actor:HasAuthority()then r.actor:ForceNetUpdate()end
@@ -123,7 +127,7 @@ return function(T)
    a:FlushNetDormancy();a:ForceNetUpdate()
   end)
   if not ok then if valid(a)then a:K2_DestroyActor()end;pc:AddMoney(L.price);error(e)end
-  return 'Laptop delivered beside you. Click its screen to use it; click the lid to fold it.'
+  return 'Laptop delivered beside you. Right-click the lid to open/close; left-click the closed laptop to pick it up.'
  end
  function L.order()
   local pc=V.pc();if pc:HasAuthority()then T.status(L.buy(pc))else assert(N.connected,'Host needs Beyond Tuning');N.call({op='laptop',action='buy'})end
@@ -137,7 +141,10 @@ return function(T)
   local r=assert(L.items[p.id],'Laptop unavailable');assert(valid(r.actor),'Laptop unavailable')
   assert(p.action=='close'or valid(pc.PlayerControlled)and pc.PlayerControlled:GetDistanceTo(r.actor)<600,'Move closer to the laptop')
   if p.action=='fold'then L.data[p.id].closed=not L.data[p.id].closed;L.persist();L.fold(r,L.data[p.id].closed);broadcast(p.id)
-  elseif p.action=='open'then L.createProxy(r);r.users=r.users or{};r.users[pc:GetAddress()]=true;N.send(pc,{op='laptopOpened',id=r.id})
+  elseif p.action=='pickup'then
+   local held={};pc:GetItemInHand(held);assert(not valid(held.Item)or same(held.Item,r.actor),'Put down the item in your hands first')
+   if not same(held.Item,r.actor)then r.actor:ExecutePrimaryAction(true,pc,r.actor.RootMeshComponent,r.actor)end
+  elseif p.action=='open'then assert(not r.closed,'Open the lid first');L.createProxy(r);r.users=r.users or{};r.users[pc:GetAddress()]=true;N.send(pc,{op='laptopOpened',id=r.id})
   elseif p.action=='close'then
    if r.users then r.users[pc:GetAddress()]=nil end
    if not r.users or not next(r.users)then if valid(r.proxy)then r.proxy:K2_DestroyActor()end;r.proxy=nil end
@@ -145,6 +152,9 @@ return function(T)
  end
  function L.toggle(r)
   if r.actor:HasAuthority()then L.request(V.pc(),{id=r.id,action='fold'})else N.call({op='laptop',id=r.id,action='fold'})end
+ end
+ function L.pickup(r)
+  if r.actor:HasAuthority()then L.request(V.pc(),{id=r.id,action='pickup'})else N.call({op='laptop',id=r.id,action='pickup'})end
  end
  function L.createProxy(r)
   if valid(r.proxy)then return r.proxy end
@@ -166,6 +176,7 @@ return function(T)
   local proxy=L.createProxy(r);r.users=r.users or{};r.users[V.pc():GetAddress()]=true;L.show(r,proxy)
  end
  function L.show(r,proxy)
+  assert(not r.closed,'Open the lid first')
   local p=V.player();r.proxy=proxy;r.hadDesktop=false;L.active=r;p.AC_EbaySystem['Open PC'](p.AC_EbaySystem,proxy);L.openPending=true
  end
  function L.freeze(r,widget)
@@ -195,11 +206,11 @@ return function(T)
   local base='/Game/BP/Items/Master/ItemSavableMaster.ItemSavableMaster_C:'
   L.hooks[1]={RegisterHook(base..'ExecutePrimaryAction',function(ctx,pressed,pc,component)
    local a=ctx:get();local r=valid(a)and L.helpers[a:GetAddress()]
-   if r and pressed:get()and same(pc:get(),V.pc())then local screen=same(component:get(),r.screenHit);T.enqueue(function()if screen and not r.closed then L.open(r)else L.toggle(r)end end)end
+   if r and pressed:get()and same(pc:get(),V.pc())then local screen=same(component:get(),r.screenHit);T.enqueue(function()if screen and not r.closed then L.open(r)else L.pickup(r)end end)end
   end)}
   L.hooks[2]={RegisterHook(base..'CanExecuteActionInVehicle',function(ctx,pc,primary,out)if L.helpers[ctx:get():GetAddress()]then out:set(true)end end)}
   L.hooks[3]={RegisterHook(base..'ForcePrimaryAction',function(ctx,pc,out)if L.helpers[ctx:get():GetAddress()]then out:set(true)end end)}
-  L.hooks[4]={RegisterHook(base..'GetPrimaryActionName',function(ctx,out)if L.helpers[ctx:get():GetAddress()]then out:set(FText('Screen: use computer / Lid: open or close'))end end)}
+  L.hooks[4]={RegisterHook(base..'GetPrimaryActionName',function(ctx,out)local r=L.helpers[ctx:get():GetAddress()];if r then out:set(FText(r.closed and'Pick up laptop'or'Screen: use computer / Lid: pick up'))end end)}
   L.hooks[5]={RegisterHook(base..'GetName',function(ctx,out)if L.helpers[ctx:get():GetAddress()]then out:set(FText('Beyond Tuning Laptop'))end end)}
   L.hooks[6]={RegisterHook(base..'SaveObject',function(ctx,out)
    local a=ctx:get();if L.transient[a:GetAddress()]==a:GetFullName()then local values=out:get();values:Empty()end
@@ -219,6 +230,13 @@ return function(T)
    for _,r in pairs(L.items)do if valid(r.actor)and valid(r.actor:GetAttachParentActor())then
     r.actor:SetActorTickEnabled(false);if valid(r.actor.AttachableComponent)then r.actor.AttachableComponent:SetComponentTickEnabled(false)end
    end end
+  end)}
+  L.hooks[10]={RegisterHook(base..'ExecuteSecondaryAction',function(ctx,pressed,pc)
+   local a=ctx:get();local r=valid(a)and L.helpers[a:GetAddress()]
+   if r and pressed:get()and same(pc:get(),V.pc())then T.enqueue(function()L.toggle(r)end)end
+  end)}
+  L.hooks[11]={RegisterHook(base..'GetSecondaryActionName',function(ctx,out)
+   local r=L.helpers[ctx:get():GetAddress()];if r then out:set(FText(r.closed and'Open lid'or'Close lid'))end
   end)}
   NotifyOnNewObject(carrierPath,function()L.dirty=true end)
  end

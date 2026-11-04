@@ -1,10 +1,10 @@
 {
   "Id": "beyondtuning",
   "Name": "Beyond Tuning",
-  "Version": "1.1.0",
+  "Version": "1.1.1",
   "Channel": "stable",
   "Description": "Car Tuning with engine-specific Drift/Race examples, multiplayer calibration and live telemetry, a folding portable laptop, persistent tunes and optional BA nitrous.",
-  "Changelog": "42 engine-specific presets; native drift assistance and race gearing; multiplayer host-saved tuning and driver telemetry; engine heat overlay; imported folding laptop with static idle display.",
+  "Changelog": "Right-click the laptop lid to open/close; left-click the closed laptop to pick it up. Closed laptops cannot open the computer, including multiplayer requests. Idle performance unchanged.",
   "Dependencies": [
     "UE4SS"
   ],
