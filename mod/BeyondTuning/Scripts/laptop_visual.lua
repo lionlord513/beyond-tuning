@@ -2,6 +2,7 @@
 return function(T)
  local V={geometry={}};local valid=T.valid
  local identity={Translation={X=0,Y=0,Z=0},Rotation={X=0,Y=0,Z=0,W=1},Scale3D={X=1,Y=1,Z=1}}
+ local loadKeyboard=dofile(T.root..'/Scripts/nitrous/collider.lua')(T.root,valid,'/assets/laptop/base.gltf')
  local function texture(a,name)
   return StaticFindObject('/Script/Engine.Default__KismetRenderingLibrary'):ImportFileAsTexture2D(a,T.root..'/assets/laptop/'..name..'.png')
  end
@@ -18,6 +19,11 @@ return function(T)
  function V.create(a)
   assert(valid(a)and valid(a.RootMeshComponent),'Laptop carrier is not ready')
   local r={actor=a,base=a.RootMeshComponent};local cls=StaticFindObject('/Script/ProceduralMeshComponent.ProceduralMeshComponent')
+  r.keyboard=a:AddComponentByClass(StaticFindObject('/Script/Engine.StaticMeshComponent'),true,identity,false)
+  r.keyboard:K2_AttachToComponent(r.base,FName('None'),0,0,0,false)
+  r.keyboard:SetAbsolute(false,false,true);r.keyboard:SetWorldScale3D(identity.Scale3D)
+  r.keyboard:SetStaticMesh(loadKeyboard());r.keyboard:SetMaterial(0,V.material(a))
+  r.keyboard:SetCollisionEnabled(0);r.keyboard:SetGenerateOverlapEvents(false);r.keyboard:SetComponentTickEnabled(false)
   r.anchor=a:AddComponentByClass(StaticFindObject('/Script/Engine.SceneComponent'),true,identity,false)
   r.anchor:K2_AttachToComponent(a.RootMeshComponent,FName('None'),0,0,0,false);r.anchor:SetAbsolute(false,false,true);r.anchor:SetWorldScale3D({X=1,Y=1,Z=1});r.anchor:SetComponentTickEnabled(false)
   for _,name in ipairs({'lid','screen'})do
@@ -44,7 +50,7 @@ return function(T)
   r.closed=closed;r.screen:SetVisibility(not closed,false)
  end
  function V.destroy(r)
-  for _,name in ipairs({'lid','screen','anchor'})do if valid(r[name])then r[name]:K2_DestroyComponent(r.actor)end end
+  for _,name in ipairs({'lid','screen','anchor','keyboard'})do if valid(r[name])then r[name]:K2_DestroyComponent(r.actor)end end
  end
  return V
 end

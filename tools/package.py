@@ -10,7 +10,7 @@ allowed={'bmm.json','enabled.txt','state/KEEP.txt','assets/icon.png','assets/nat
 allowed.update('presets/'+name for name in json.loads((root/'tools/example-presets.json').read_text()))
 allowed.update('assets/laptop/'+name for name in ['base.lua','lid.lua','screen.lua','laptop.png','normal.png','roughness.png','black.png','white.png','wallpaper.png','icon.png','ATTRIBUTION.txt'])
 allowed.update('assets/nitrous/'+name for name in ['ATTRIBUTION.txt','bottle.lua','collider.gltf','blue-textures.gltf','purple-textures.gltf','blue.png','purple.png'])
-allowed.update({'assets/native/BeyondImports.dll','assets/native/BeyondMotorcycle.dll','assets/laptop/base.gltf'})
+allowed.update({'assets/native/BeyondImports.dll','assets/native/BeyondMotorcycle.dll','assets/laptop/base.gltf','assets/laptop/pickup.gltf'})
 allowed.update('assets/nitrous/'+name for name in ['plastic-normal.png','roughness.png','rifle-metal.png','clean-ao.png'])
 prefix='DriveBeyondHorizons/Binaries/Win64/ue4ss/Mods/BeyondTuning/'
 with zipfile.ZipFile(archive,'w',zipfile.ZIP_DEFLATED,compresslevel=9) as z:

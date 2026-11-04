@@ -1,5 +1,9 @@
 # Validation
 
+## Version 1.2.3
+
+Tested on Steam build 26437602 with Beyond Apocalypse and the host dev menu installed. Checked the folded pickup hull, mounted keyboard and lid scale, and native removal. The idle, loot, tuning and nitrous regressions were also run.
+
 ## Version 1.2.2
 
 Checked the desktop shortcut with insufficient funds and an exact $1,000 charge for one delivered laptop. The native player primary action took a folded laptop through its real physical mesh, kept it in hand while moving, and released it on drop. The same check passed for an older generic carrier. The loot regression selected 59 of 4,096 test sites and skipped revisits and non-host players. The 10,000-update idle laptop regression passed. Separate-PC multiplayer was not exercised.

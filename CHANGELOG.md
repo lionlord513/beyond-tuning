@@ -1,3 +1,9 @@
+# Beyond Tuning 1.2.3
+
+- Fixed the laptop keyboard changing size when mounted.
+- Fixed laptops disappearing when removed from a car.
+- Closed laptops can now be picked up from any side.
+
 # Beyond Tuning 1.2.2
 
 - Moved laptop purchases to the computer desktop. Laptops cost $1,000.

@@ -1,10 +1,10 @@
 {
   "Id": "beyondtuning",
   "Name": "Beyond Tuning",
-  "Version": "1.2.2",
+  "Version": "1.2.3",
   "Channel": "stable",
   "Description": "Tune your car, fit nitrous and take a laptop on the road.",
-  "Changelog": "Moved laptop purchases to the computer desktop. Laptops cost $1,000.\nAdded rare laptop loot at roadside buildings.\nFixed picking up a closed laptop and opening its lid while wearing a backpack.",
+  "Changelog": "Fixed the laptop keyboard changing size when mounted.\nFixed laptops disappearing when removed from a car.\nClosed laptops can now be picked up from any side.",
   "Dependencies": [
     "UE4SS"
   ],
