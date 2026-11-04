@@ -47,7 +47,7 @@ return function(T)
   if valid(U.ui)then U.ui:RemoveFromParent()end;U.ui=nil;U.opened=false;U.menu=nil;U.hits={};U.pending={};U.generation=U.generation+1
   if valid(U.hud)and valid(U.pc)and U.hud:IsInViewport()then U.hud:SetVisibility(0);lib:SetInputMode_UIOnlyEx(U.pc,U.hud,0,false)end
  end
- local function preset(p)T.draft=P.copy(p.tune);T.presetName=p.name;U.menu=nil;dirty();T.status(p.name..' loaded as a draft. '..(p.description or'Press Apply to write it to this car.'))end
+ local function preset(p)T.draft=P.copy(p.tune);T.presetName=p.name;U.menu=nil;dirty();T.status(p.name..' loaded')end
  local function sheet(title)
   local p=U.panel;rect(p,14,82,1372,754,U.paper);rect(p,14,82,1372,4,U.accent);label(p,title,38,105,1000,40,25)
   button(p,'Back to tuning',1180,101,178,38,function()U.menu=nil;refresh()end);return p
@@ -82,8 +82,6 @@ return function(T)
   label(p,'Speed units',42,548,320,32,20)
   for i,name in ipairs({'km/h','mph'})do button(p,name,400+(i-1)*210,542,190,42,function()S.settings.units=name;S.saveSettings();refresh()end,S.settings.units==name)end
   button(p,'Engine heat overlay: '..(S.settings.heat and'ON'or'OFF'),42,625,480,44,function()S.settings.heat=not S.settings.heat;S.saveSettings();refresh()end,S.settings.heat)
-  label(p,'Color shows the engine temperature, not a per-cylinder thermal simulation.',550,636,790,28,16,U.muted)
-  label(p,'Beyond Tuning '..T.version..'  /  native computer integration  /  DBH build 26106988',42,718,1250,32,17,U.muted)
  end
  local function files()
   local p=sheet('FILE / Presets and transfer')
@@ -107,7 +105,6 @@ return function(T)
   button(p,'Next >',240,696,180,40,function()U.presetPage=math.min(math.max(1,math.ceil(#list/12)),U.presetPage+1);refresh()end)
   label(p,'Page '..U.presetPage..'  /  '..#list..' presets',448,705,460,30,17,U.muted)
   button(p,'Laptop / Buy for $250',1010,696,330,44,function()T.laptop.order()end,true,16)
-  label(p,'Drift: rear drive + native assist. Race: max output + longer top gears. Load, edit, Apply, then Save preset.',42,778,1290,28,16,U.muted)
  end
  local function boost()
   local p=sheet('BOOST / Nitrous injection and individual turbos');local I=T.induction;local a=V.last
@@ -121,35 +118,36 @@ return function(T)
    button(p,'+',564,213,52,42,function()T.draft.nitrous=math.min(200,(T.draft.nitrous or 100)+25);dirty()end)
    label(p,('About %.2fx stock duration / %.2fx injection force'):format(100/value,value/100),657,220,650,32,17)
   end
-  label(p,'Less injection uses less nitrous and gives a gentler push. More injection burns the bottle faster.',42,278,1290,27,17,U.muted)
-  label(p,'Hold Shift while driving to use BA nitrous. Its engine, traction and braking safety rules still apply.',42,310,1290,27,16,U.muted)
+  if I.nitrous.order then
+   U.bottleChoice=U.bottleChoice or 1
+   local d=I.nitrous.catalog[U.bottleChoice]
+   button(p,d.name..'  >',42,282,400,44,function()U.bottleChoice=U.bottleChoice%6+1;refresh()end)
+   button(p,'Buy / $'..d.price,457,282,210,44,function()I.nitrous.order(d.id)end,true)
+  end
+  label(p,'Hold Shift to boost while driving.',705,291,625,28,17,U.muted)
   label(p,'INSTALLED TURBOS',42,365,800,32,20,U.accent)
   local list=I.turbos(V.lastMotor);U.turboPage=math.min(U.turboPage or 1,math.max(1,math.ceil(#list/4)))
   if #list==0 then label(p,'Unavailable - fit a turbo to the installed engine first.',42,426,1260,32,19,U.muted)end
   for i=(U.turboPage-1)*4+1,math.min(#list,U.turboPage*4)do local x=list[i];local y=417+(i-(U.turboPage-1)*4-1)*65;local value=T.draft.turbos[x.key]or T.draft.turboDefault or 100
    label(p,('Turbo %d / %s'):format(i,x.name),42,y,560,30,18)
-   label(p,x.key,42,y+29,650,24,13,U.muted)
    button(p,'-',730,y,52,40,function()T.draft.turbos[x.key]=math.max(25,value-25);dirty()end)
    label(p,('%g%% boost'):format(value),804,y+6,190,30,19,U.accent)
    button(p,'+',1002,y,52,40,function()T.draft.turbos[x.key]=math.min(200,value+25);dirty()end)
    button(p,'Stock',1090,y,180,40,function()T.draft.turbos[x.key]=nil;dirty()end)
   end
   if #list>4 then button(p,'<',42,695,55,34,function()U.turboPage=math.max(1,U.turboPage-1);refresh()end);button(p,'>',110,695,55,34,function()U.turboPage=math.min(math.ceil(#list/4),U.turboPage+1);refresh()end)end
-  label(p,'Each setting scales that turbo\'s native boost contribution. 100% is stock; missing slots are ignored.',42,742,1290,28,16,U.muted)
-  label(p,T.dirty and 'DRAFT / Press Apply to save changes to this car.'or'Changes are saved with the car and engine.',42,792,870,28,17,U.muted)
+  label(p,T.dirty and 'Unapplied changes' or '',42,792,870,28,17,U.muted)
   button(p,'Apply to car',1148,780,205,45,function()V.apply(T.draft);refresh()end,true,18)
  end
  local function diagnostics()
   local p=sheet('VEHICLE / Connected hardware');local a=V.last;local m=V.lastMotor
   local rows={{'Target',valid(a)and V.carName(a)or'Sit in a car to connect'},{'Chassis class',valid(a)and a:GetClass():GetFName():ToString()or'--'},
    {'Installed engine',V.name(m)},{'Engine class',valid(m)and m:GetClass():GetFName():ToString()or'--'},
-   {'Tune identity',V.current and V.current.id or'Not assigned yet'},
    {'Transmission',V.current and (#V.current.base.gears-1)..' forward gears + reverse'or'--'},
    {'Engine redline',V.current and math.floor(V.current.base.redline)..' RPM'or'--'},
    {'Authority',valid(a)and(a:HasAuthority()and'Host / tuning enabled'or(T.network and T.network.connected and'Client / host synchronization active'or'Client / waiting for host mod'))or'--'}}
   if valid(a)then for _,d in ipairs({{'Battery','CarBatteryV2'},{'Radiator','CarRadiatorV2'},{'Fuel tank','CarTankGasV2'}})do local slot=a[d[2]];rows[#rows+1]={d[1],valid(slot)and V.name(slot.AttachedCarEquipableActor)or'Not installed'}end end
   for i,row in ipairs(rows)do label(p,row[1],42,169+(i-1)*48,280,31,17,U.muted);label(p,row[2],330,169+(i-1)*48,1000,31,18)end
-  label(p,'Hardware names come from the installed actors. Exact class identifiers are included above.',42,762,1280,32,17,U.muted)
  end
  local function tuning()
   local p=U.panel;local a=V.last;local motor=V.lastMotor
@@ -208,7 +206,7 @@ return function(T)
   if not S.settings.simple then button(p,U.tableMode and 'Main controls'or'Torque table',24,790,185,40,function()U.tableMode=not U.tableMode;refresh()end,U.tableMode,15)end
   button(p,V.paused and 'Resume log'or'Pause log',226,790,170,40,function()V.paused=not V.paused;refresh()end,V.paused,15)
   button(p,'Clear log',410,790,140,40,function()V.history={};refresh()end,false,15)
-  label(p,T.dirty and 'DRAFT CHANGES' or'CALIBRATION READY',582,800,360,27,16,T.dirty and color(.9,.4,.05)or U.muted)
+  label(p,T.dirty and 'Unapplied changes' or'',582,800,360,27,16,T.dirty and color(.9,.4,.05)or U.muted)
   button(p,'Revert draft',999,788,170,44,function()T.draft=P.copy(V.current and V.current.tune or P.stock());T.dirty=false;refresh()end)
   button(p,'Apply to car',1184,788,190,44,function()V.apply(T.draft);refresh()end,true,18)
  end

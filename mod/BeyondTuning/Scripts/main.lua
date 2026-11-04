@@ -1,5 +1,5 @@
 local root=debug.getinfo(1,'S').source:sub(2):gsub('\\','/'):match('^(.*)/Scripts/[^/]+$')
-local T={version='1.1.2',root=assert(root),queue={},message='Sit in a car, then open Car Tuning on a computer.',active=true}
+local T={version='1.2.0',root=assert(root),queue={},message='Sit in a car, then open Car Tuning on a computer.',active=true}
 function T.valid(o)return o and o:IsValid()end
 function T.status(s)local text=tostring(s);print('[Beyond Tuning] '..text..'\n');T.message=text:gsub('^.-:%d+: ',''):match('[^\r\n]+'):sub(1,165);if T.ui then T.ui.refreshStatus=true end end
 function T.enqueue(fn)T.queue[#T.queue+1]=fn end
@@ -31,5 +31,5 @@ end)
 RegisterLoadMapPreHook(function()T.resetRequested=true end)
 RegisterKeyBind(Key.ESCAPE,function()ExecuteInGameThread(function()if T.laptop.active then T.laptop.close()elseif T.ui.opened then T.ui.close()end end)end)
 _G.BeyondTuning=T
-T.status('Beyond Tuning '..T.version..' loaded. Car Tuning is available on in-game computers.')
+print('[Beyond Tuning] '..T.version..' loaded\n')
 return T

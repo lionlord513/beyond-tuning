@@ -10,6 +10,10 @@ their converted mesh data, are licensed by ZwiebelGames under Creative Commons
 Attribution 4.0 International. This notice does not restrict that license.
 See mod/BeyondTuning/assets/laptop/ATTRIBUTION.txt for source and attribution.
 
+The nitrous subsystem and import helpers carried over from Beyond Apocalypse
+retain their original MIT terms. See assets/nitrous/ATTRIBUTION.txt in the
+installed mod for the license and the separate bottle asset notice.
+
 Game assets, Unreal Engine and dependencies retain their respective ownership
 and terms. No game meshes or proprietary companion code are included.
 

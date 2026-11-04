@@ -1,5 +1,11 @@
 # Validation
 
+## Version 1.2.0
+
+A disposable copy of a player's autosave loaded the same world and vehicles. A newly delivered laptop was mounted there. Nine traces across its folded surface selected the laptop, including the corners. The native Remove action released it. After Take, the visible native mesh stayed about one metre from the camera and appeared in a capture from the player's viewpoint. Dropping it restored world interaction and its open prompt read Use laptop.
+
+With Beyond Apocalypse absent, buying a Stage I five-litre bottle in that world produced a textured bottle holding five litres of native nitrous. The policy checks cover all six variants, 25–200% injection, partial bottles, safety cutoffs, and immutable save revisions. Separate-PC multiplayer was not exercised for this release.
+
 ## Version 1.1.2 laptop fixes
 
 In a disposable solo world, a real car's attachment list lost the mounted laptop after native Remove from either the closed lid or the body. A loose laptop was taken into hands. Beyond Apocalypse's actual backpack transfer code stored it, returned its Tuner Laptop name and texture, retrieved it into hands, and restored its closed lid and usable desktop. Forcing the screen snapshot to throw during exit still removed the fullscreen HUD and restored mouse, look and movement input. These checks did not use a second networked PC.

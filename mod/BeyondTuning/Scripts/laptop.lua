@@ -5,7 +5,7 @@ return function(T)
  local game=StaticFindObject('/Script/Engine.Default__GameplayStatics')
  local scene=StaticFindObject('/Script/Engine.SceneComponent')
  local meshClass=StaticFindObject('/Script/Engine.StaticMeshComponent')
- local colliderClass=StaticFindObject('/Script/ProceduralMeshComponent.ProceduralMeshComponent')
+ local loadBase=dofile(T.root..'/Scripts/nitrous/collider.lua')(T.root,valid,'/assets/laptop/base.gltf')
  local identity={Translation={X=0,Y=0,Z=0},Rotation={X=0,Y=0,Z=0,W=1},Scale3D={X=1,Y=1,Z=1}}
  local carrierPath='/Game/BP/Items/Master/AttachableMaster.AttachableMaster_C'
  local helperPath='/Game/BP/Items/Master/ItemSavableMaster.ItemSavableMaster_C'
@@ -33,26 +33,28 @@ return function(T)
  end
  local function configureCarrier(a,id)
   local c=a.RootMeshComponent
-  if not valid(c)then local _,tag=marker(a);local parent=valid(tag)and tag:GetAttachParent();if valid(parent)and parent:IsA(colliderClass)then c=parent end end
-  if not valid(c)then
-   c=a:AddComponentByClass(colliderClass,true,identity,false);assert(valid(c),'Laptop collision unavailable')
+  if not valid(c) then
+   local _,tag=marker(a)
+   c=valid(tag) and tag:GetAttachParent()
+  end
+  if not valid(c) or not c:IsA(meshClass) then
+   c=a:AddComponentByClass(meshClass,true,identity,false)
+   assert(valid(c),'Laptop body unavailable')
    c:K2_AttachToComponent(a.DefaultSceneRoot,FName('None'),0,0,0,false)
    c:SetIsReplicated(true)
   end
-  -- A real 35 x 40 x 3 cm convex body at unit scale. Native mounting and saves
-  -- can reset scale without inflating the collision or separating the hinge.
-  if not L.colliders then L.colliders={}end
-  if not L.colliders[c:GetAddress()]then
-   local vertices={};for _,z in ipairs({-1.5,1.5})do for _,y in ipairs({-20,20})do for _,x in ipairs({-17.5,17.5})do vertices[#vertices+1]={X=x,Y=y,Z=z}end end end
-   c.bUseComplexAsSimpleCollision=false;c:CreateMeshSection(0,vertices,{0,2,1,1,2,3,4,5,6,5,7,6,0,1,4,1,5,4,2,6,3,3,6,7,0,4,2,2,4,6,1,3,5,3,7,5},{},{},{},{},false)
-   c:ClearCollisionConvexMeshes();c:AddCollisionConvexMesh(vertices);L.colliders[c:GetAddress()]=true
-  end
+  local base=loadBase()
+  if not same(c.StaticMesh,base) then c:SetStaticMesh(base) end
+  c:SetMaterial(0,visual.material(a))
   c:SetCollisionProfileName(FName('PhysicsActor'),true)
-  a.RootMeshComponent=c;a:SetActorScale3D({X=1,Y=1,Z=1});c:SetWorldScale3D({X=1,Y=1,Z=1});a.BaseRelativeScale={X=1,Y=1,Z=1}
-  c:SetVisibility(false,false);c:SetHiddenInGame(true,false);c:SetCastShadow(false)
+  c:SetVisibility(true,false)
+  c:SetHiddenInGame(false,false)
+  c:SetOwnerNoSee(false)
+  a.RootMeshComponent=c
+  a.BaseRelativeScale={X=1,Y=1,Z=1}
+  c:SetWorldScale3D(a.BaseRelativeScale)
   c:SetMassOverrideInKg(FName('None'),3,true)
   a.CanBeAttachedToTheCar=true;a.CanBeInBackpack=true;a.OvverideMass=3;a.BaseMass=3
-  if valid(a.AttachableComponent)then a.AttachableComponent:SetComponentTickEnabled(false)end
   return c
  end
  local function mark(a,id)
@@ -70,7 +72,7 @@ return function(T)
   c:SetStaticMesh((LoadAsset('/Engine/BasicShapes/Cube.Cube')));c:K2_AttachToComponent(parent,FName('None'),0,0,0,false)
   c:SetRelativeScale3D(scale);c:K2_SetRelativeLocation(position,false,{},true)
   c:SetVisibility(false,false);c:SetHiddenInGame(true,false);c:SetCastShadow(false);c:SetSimulatePhysics(false)
-  c:SetCollisionResponseToAllChannels(0);c:SetCollisionResponseToChannel(3,2);c:SetCollisionResponseToChannel(0,2);c:SetCollisionEnabled(1);c:SetGenerateOverlapEvents(false)
+  c:SetCollisionObjectType(5);c:SetCollisionResponseToAllChannels(2);c:SetCollisionResponseToChannel(2,0);c:SetCollisionEnabled(1);c:SetGenerateOverlapEvents(false)
   return c
  end
  function L.helper(r)
@@ -85,6 +87,9 @@ return function(T)
   if valid(h.ItemSaver)then h.ItemSaver.SaveOnDistance=false end
   -- Left-click uses only the open screen; the lid forwards pickup to the body.
   -- Right-click on either interaction surface opens/closes the physical lid.
+  -- A separate query surface covers the keyboard, corners and folded lid.
+  -- It stays on the laptop's physical base when the hinged screen moves.
+  r.bodyHit=box(h,a.RootMeshComponent,{X=.39,Y=.44,Z=.10},{X=2.2,Y=0,Z=3.6})
   r.lidHit=box(h,h.RootComponent,{X=.023,Y=.40,Z=.34},{X=8.5,Y=0,Z=15.5})
   r.screenHit=box(h,h.RootComponent,{X=.024,Y=.313,Z=.237},{X=8.1,Y=0,Z=16.4})
   r.lidHit:K2_SetRelativeRotation({Pitch=-29,Yaw=0,Roll=0},false,{},true)
@@ -129,7 +134,7 @@ return function(T)
    a:FlushNetDormancy();a:ForceNetUpdate()
   end)
   if not ok then if valid(a)then a:K2_DestroyActor()end;pc:AddMoney(L.price);error(e)end
-  return 'Laptop delivered beside you. Right-click the lid to open/close; left-click the closed laptop to pick it up.'
+  return 'Laptop delivered'
  end
  function L.order()
   local pc=V.pc();if pc:HasAuthority()then T.status(L.buy(pc))else assert(N.connected,'Host needs Beyond Tuning');N.call({op='laptop',action='buy'})end
@@ -141,12 +146,19 @@ return function(T)
  function L.request(pc,p)
   if p.action=='buy'then N.send(pc,{op='notice',message=L.buy(pc)});return end
   local r=assert(L.items[p.id],'Laptop unavailable');assert(valid(r.actor),'Laptop unavailable')
-  assert(p.action=='close'or valid(pc.PlayerControlled)and pc.PlayerControlled:GetDistanceTo(r.actor)<600,'Move closer to the laptop')
+  if p.action~='close' then
+   assert(valid(pc.PlayerControlled),'Player unavailable')
+   local from=pc.PlayerControlled:K2_GetActorLocation()
+   local to=r.base:K2_GetComponentLocation()
+   assert((to.X-from.X)^2+(to.Y-from.Y)^2+(to.Z-from.Z)^2<600^2,'Move closer to the laptop')
+  end
   if p.action=='fold'then L.data[p.id].closed=not L.data[p.id].closed;L.persist();L.fold(r,L.data[p.id].closed);broadcast(p.id)
   elseif p.action=='pickup'then
    local held={};pc:GetItemInHand(held);assert(not valid(held.Item)or same(held.Item,r.actor),'Put down the item in your hands first')
    if not same(held.Item,r.actor)then
     local a=r.actor;local mesh=a.RootMeshComponent
+    a:SetActorTickEnabled(true)
+    if valid(a.AttachableComponent)then a.AttachableComponent:SetComponentTickEnabled(true)end
     -- Native secondary is Remove for attached items; native primary is Take
     -- for loose items. Let the game own attachment lists, hands and physics.
     if L.attached(r)then a:ExecuteSecondaryAction(true,pc,mesh,a,mesh:K2_GetComponentToWorld())
@@ -245,33 +257,49 @@ return function(T)
   local base='/Game/BP/Items/Master/ItemSavableMaster.ItemSavableMaster_C:'
   L.hooks[1]={RegisterHook(base..'ExecutePrimaryAction',function(ctx,pressed,pc,component)
    local a=ctx:get();local r=valid(a)and L.helpers[a:GetAddress()]
-   if r and pressed:get()and same(pc:get(),V.pc())then local screen=same(component:get(),r.screenHit);T.enqueue(function()if screen and not r.closed then L.open(r)else L.pickup(r)end end)end
+   if r and pressed:get()and same(pc:get(),V.pc())then local screen=same(component:get(),r.screenHit);T.enqueue(function()if r.closed then L.pickup(r)elseif screen then L.open(r)end end)end
   end)}
   L.hooks[2]={RegisterHook(base..'CanExecuteActionInVehicle',function(ctx,pc,primary,out)if L.helpers[ctx:get():GetAddress()]then out:set(true)end end)}
   L.hooks[3]={RegisterHook(base..'ForcePrimaryAction',function(ctx,pc,out)if L.helpers[ctx:get():GetAddress()]then out:set(true)end end)}
-  L.hooks[4]={RegisterHook(base..'GetPrimaryActionName',function(ctx,out)local r=L.helpers[ctx:get():GetAddress()];if r then out:set(FText(r.closed and takeName(r)or('Screen: use computer / Lid: '..takeName(r))))end end)}
+  L.hooks[4]={RegisterHook(base..'GetPrimaryActionName',function(ctx,out)local r=L.helpers[ctx:get():GetAddress()];if r then out:set(FText(r.closed and takeName(r)or'Use laptop'))end end)}
   L.hooks[5]={RegisterHook(base..'GetName',function(ctx,out)if L.helpers[ctx:get():GetAddress()]then out:set(FText('Tuner Laptop'))end end)}
   L.hooks[6]={RegisterHook(base..'SaveObject',function(ctx,out)
    local a=ctx:get();if L.transient[a:GetAddress()]==a:GetFullName()then local values=out:get();values:Empty()end
   end)}
-  local function interaction(ctx,pressed,pc,primary)
-   local a=ctx:get();local id=valid(a)and marker(a);if not id or not L.items[id]then return end;local caller=pc:get()
-   local r=L.items[id];local remove=primary and pressed:get()and r.closed and L.attached(r)
+  local function interaction(ctx,pressed,pc,component,primary)
+   local a=ctx:get();local r=valid(a)and L.actors[a:GetAddress()];if not r then return end;local id=r.id;local caller=pc:get()
+   if not valid(caller) then return end
+   local previousHolder=r.holder
+   local after={};caller:GetItemInHand(after)
+   r.holder=same(after.Item,a) and caller or nil
+   local hit=component:get()
+   -- A native placement can finish before this Blueprint post-hook runs.
+   -- Only forward Remove for a click on the laptop itself with free hands.
+   local remove=primary and pressed:get() and r.closed and not same(previousHolder,caller)
+    and valid(hit) and same(hit:GetOwner(),a) and L.attached(r)
    T.enqueue(function()
     if not valid(a)then return end
     if remove and valid(caller)then
      if a:HasAuthority()then L.request(caller,{id=id,action='pickup'})elseif same(caller,V.pc())then L.pickup(r)end
     end
     local held={};if valid(caller)then caller:GetItemInHand(held)end
-    local inHand=same(held.Item,a);if valid(a.AttachableComponent)then a.AttachableComponent:SetComponentTickEnabled(inHand)end
-    if valid(a:GetAttachParentActor())and not inHand then a:SetActorTickEnabled(false)end
+    local inHand=same(held.Item,a)
+    if valid(r.helper) then r.helper:SetActorEnableCollision(not inHand) end
+    if inHand then
+     a:SetActorTickEnabled(true)
+     if valid(a.AttachableComponent) then a.AttachableComponent:SetComponentTickEnabled(true) end
+    elseif L.attached(r) then
+     a:SetActorTickEnabled(false)
+     if valid(a.AttachableComponent) then a.AttachableComponent:SetComponentTickEnabled(false) end
+    end
    end)
   end
   local attach='/Game/BP/Items/Master/AttachableMaster.AttachableMaster_C:'
-  L.hooks[7]={RegisterHook(attach..'ExecutePrimaryAction',function(ctx,pressed,pc)interaction(ctx,pressed,pc,true)end)}
-  L.hooks[8]={RegisterHook(attach..'ExecuteSecondaryAction',function(ctx,pressed,pc)interaction(ctx,pressed,pc,false)end)}
+  L.hooks[7]={RegisterHook(attach..'ExecutePrimaryAction',function(ctx,pressed,pc,component)interaction(ctx,pressed,pc,component,true)end)}
+  L.hooks[8]={RegisterHook(attach..'ExecuteSecondaryAction',function(ctx,pressed,pc,component)interaction(ctx,pressed,pc,component,false)end)}
   L.hooks[9]={RegisterHook('/Game/BP/Components/AttachActorOn.AttachActorOn_C:OnRep_ActorsAttached',function()
-   for _,r in pairs(L.items)do if valid(r.actor)and valid(r.actor:GetAttachParentActor())then
+   for _,r in pairs(L.items)do if valid(r.actor)and L.attached(r)then
+    if valid(r.helper)then r.helper:SetActorEnableCollision(true)end
     r.actor:SetActorTickEnabled(false);if valid(r.actor.AttachableComponent)then r.actor.AttachableComponent:SetComponentTickEnabled(false)end
    end end
   end)}
@@ -283,10 +311,10 @@ return function(T)
    local r=L.helpers[ctx:get():GetAddress()];if r then out:set(FText(r.closed and'Open lid'or'Close lid'))end
   end)}
   L.hooks[12]={RegisterHook(attach..'ForcePrimaryAction',function(ctx,pc,out)
-   local r=L.actors[ctx:get():GetAddress()];if r and r.closed then out:set(true)end
+   local r=L.actors[ctx:get():GetAddress()];if r and r.closed and not valid(r.holder)then out:set(true)end
   end)}
   L.hooks[13]={RegisterHook(attach..'GetPrimaryActionName',function(ctx,out)
-   local r=L.actors[ctx:get():GetAddress()];if r and r.closed then out:set(FText(takeName(r)))end
+   local r=L.actors[ctx:get():GetAddress()];if r and not valid(r.holder)then out:set(FText(r.closed and takeName(r)or 'Use laptop'))end
   end)}
   L.hooks[14]={RegisterHook('/Game/BP/Items/Master/ItemBaseMaster.ItemBaseMaster_C:GetName',function(ctx,out)
    local a=ctx:get();if L.actors[a:GetAddress()]or(a:GetFullName():match('^AttachableMaster_C ')and L.data[actorId(a)])then out:set(FText('Tuner Laptop'))end

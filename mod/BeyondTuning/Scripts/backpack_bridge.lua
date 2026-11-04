@@ -12,7 +12,15 @@ return function(M,root)
   return false
  end
  local itemName,title,icon=M.itemName,N.title,N.icon
- M.itemName=function(a)if laptop(a)then return 'Tuner Laptop'end;return itemName(a)end
+ M.itemName=function(a)
+  if laptop(a) then return 'Tuner Laptop' end
+  if valid(a) and a:GetFullName():match('^GasBarrelGaz_2_C ') then
+   local out={};a:GetName(out)
+   local name=out.Name and out.Name:ToString()
+   if name and name:match('^Nitrous Stage ') then return name end
+  end
+  return itemName(a)
+ end
  -- Older stored laptops have the carrier's old label. Resolve each snapshot
  -- only when displayed, through the game's normal loader, without editing bytes.
  local resolved={}

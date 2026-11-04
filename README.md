@@ -8,9 +8,9 @@ Built using the native computer-window approach established by Beyond Apocalypse
 
 ## Install
 
-Windows x64, Drive Beyond Horizons build 26106988, and a compatible UE4SS installation are required. Developed alongside Beyond Apocalypse 1.0.10. Beyond Apocalypse is optional; when installed, Beyond Mod Manager loads it first.
+Windows x64, Drive Beyond Horizons build 26106988, and a compatible UE4SS installation are required. Use Beyond Apocalypse 1.0.11 or newer when installing both. Beyond Apocalypse is optional; when installed, Beyond Mod Manager loads it first.
 
-**Beyond Mod Manager:** import `BeyondTuning-1.1.2-Nexus.zip`, inspect the preview, and install. The manifest supplies identity, version, load order, GitHub updates and preservation rules for your presets and settings.
+**Beyond Mod Manager:** import `BeyondTuning-1.2.0-Nexus.zip`, inspect the preview, and install. The manifest supplies identity, version, load order, GitHub updates and preservation rules for your presets and settings.
 
 **Manual:** exit the game and extract the ZIP into the main `Drive Beyond Horizons` game folder. The resulting path is `DriveBeyondHorizons/Binaries/Win64/ue4ss/Mods/BeyondTuning/Scripts/main.lua`. The included `enabled.txt` enables the mod. This package does not include or replace UE4SS.
 
@@ -34,7 +34,7 @@ The target remains the last car you sat in during this game session. A different
 | Shift duration | Changes the native time spent changing gears. Lower values shift more quickly. |
 | Pedal response | Changes part-throttle torque delivery. It does not add full-throttle output on its own. |
 | Individual turbos | Scales each fitted turbo's native boost contribution independently, from 25–200%. Unfitted slots are ignored. |
-| Nitrous injection | With Beyond Apocalypse and a fitted bottle: 25–200% injection. Half injection gives half force and approximately twice the bottle duration; double injection reverses the tradeoff. BA keeps its activation and safety rules. |
+| Nitrous injection | With a fitted bottle: 25–200% injection. Half injection gives half force and approximately twice the bottle duration; double injection reverses the tradeoff. Hold Shift to activate while driving. |
 | Torque table | Applies a smoothly interpolated correction across five pedal rows and eight RPM columns. 100 is neutral. |
 
 **Restore stock** restores the captured native settings and removes that car/engine's saved tune. **Revert draft** discards unapplied edits. Power and the torque table multiply together, so make small changes and compare.
@@ -43,7 +43,7 @@ Curve previews the engine correction before turbo/nitrous effects, not measured 
 
 **Handling** cycles Stock, Drift and Race. **Gears** cycles the original layout, short drift ratios, and a race spread with stronger launch gears and taller high gears. Gear count and reverse are preserved.
 
-**Boost** lists each installed turbo by its slot. Turbo percentages describe the game's boost contribution, not PSI. Nitrous shows **Unavailable** without Beyond Apocalypse, or when no BA bottle is attached. Hold Shift while driving to activate BA nitrous after applying the tune. An empty bottle produces no extra force. Standalone engine, gearbox and turbo tuning do not require BA.
+**Boost** lists each installed turbo by its slot. Turbo percentages describe the game's boost contribution, not PSI. Choose a Stage I or Stage II bottle in **Boost** and press **Buy**. Attach it with the normal placement controls. Hold Shift while driving to boost. Use the native pouring controls to refill it. Both stages come in 2, 5 and 10 litre sizes and can also appear near buildings. Existing bottles keep their contents when upgrading from BA.
 
 ## Engine examples
 
@@ -51,7 +51,7 @@ There are **42 examples: Drift and Race for all 21 engines** in the supported ga
 
 Drift uses the game's native drift-assist component, the measured SLIDY grip and steering-speed settings, rear-wheel drive, a wider steering range, short gears and an engine-family torque map. Race selects maximum engine/table output and fitted-turbo contribution, fast shifts, extra grip, low rolling resistance, stronger launch gears and taller top gears. These are editable examples; road surface, tires, load and engine condition still affect the result. Maximum power also produces more heat and consumes more fuel. No tune can guarantee the fastest result on every car and road.
 
-Nitrous examples use 50% injection for Drift and 200% for Race. Those values take effect only with BA nitrous fitted. Unfitted hardware is never invented or added by a preset.
+Nitrous examples use 50% injection for Drift and 200% for Race. Those values take effect only with a nitrous bottle fitted. Unfitted hardware is never invented or added by a preset.
 
 ## Portable laptop
 
@@ -92,7 +92,7 @@ The drop target is the small Windows import window, not the game's viewport. Use
 
 Loading an older save of the same world retains the latest applied calibration for matching car/engine identities. Native save revisions also receive calibration snapshots. Keep both `state` and `presets` when moving to another PC. The mod cannot recover a car the game itself never saved; its Last applied preset remains available for another car. Draft edits are temporary until Apply or Save preset. Restore stock is an intentional calibration reset; reusable presets remain available.
 
-The mod runs on the game thread and uses the same native computer UI methodology as Hangar. It does not replace Apocalypse files or hooks, ship private companion code, or redistribute game meshes. The optional nitrous adapter adjusts measured native fluid consumption and the corresponding native boost force while BA owns activation. At 100% it leaves the behavior unchanged. Engine images are generated locally at runtime. Presets contain data only. The small native DLL provides Windows file dialogs, drag/drop, pointer position while dragging the model, and image contour conversion; it has no network access.
+The mod runs on the game thread and uses the same native computer UI methodology as Hangar. Beyond Tuning owns the bottle controller, consumption and force. With BA 1.0.10 still active it defers to that version until both mods are updated. Engine images are generated locally at runtime. Presets contain data only. The small native DLL provides Windows file dialogs, drag/drop, pointer position while dragging the model, and image contour conversion; it has no network access.
 
 Tuning is host-authoritative; clients can request changes and receive a saved confirmation. Native reliable request/response and host persistence were exercised locally. A separate two-PC multiplayer session has not been validated. Other mods which replace native torque, gear arrays or engine calibration can conflict. Future game builds may change the reflected APIs. See TESTING.md for the exact coverage.
 

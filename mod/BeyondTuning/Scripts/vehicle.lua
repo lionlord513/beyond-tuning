@@ -106,7 +106,7 @@ return function(T)
   local r=V.applyTo(a,tune);local new=r.tune;V.current=r;T.dirty=false
   if T.network then T.network.broadcast(r)end
   if not P.isStock(new)then local saved,err=pcall(S.savePreset,new,'Last applied - '..V.carName(a)..' - '..r.id:sub(1,8)..'-'..r.id:sub(34,41));if not saved then T.status('Tune persisted; reusable preset copy failed: '..tostring(err));return end end
-  T.status('Tune applied and saved to disk for '..V.carName(a)..'. Presets and car tunes survive game restarts.')
+  T.status('Tune applied to '..V.carName(a))
  end
  function V.readTelemetry(a)
   local r=V.records[a:GetFullName()];local m=V.motor(a);local t={rpm=a.RPM or 0,throttle=a.Throttle or 0,gear=a.CurrentGear or 0}

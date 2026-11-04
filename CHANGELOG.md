@@ -1,3 +1,9 @@
+# Beyond Tuning 1.2.0
+
+- The native physics handle carries the visible laptop base. The folded lid and keyboard have a wider selection area, and an open screen reads Use laptop.
+- Buy Stage I and Stage II nitrous bottles in Boost. Beyond Tuning owns their fluid, vehicle boost, effects, ambient spawns and save records. Update Beyond Apocalypse to 1.0.11 when using both.
+- Shortened tune confirmations and removed internal identifiers from the tuner.
+
 # Beyond Tuning 1.1.2
 
 - Closed laptops use the native Remove action on mounts and Take action on the ground.

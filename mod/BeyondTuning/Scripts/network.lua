@@ -57,7 +57,7 @@ return function(T)
   if S.world then S.persist()end
   if N.pending and p.request==N.pending.serial then
    T.draft=P.copy(tune);T.dirty=false;N.pending=nil
-   S.savePreset(tune,T.presetName or'Last multiplayer tune');T.status('Host applied and permanently saved the tune. All players are synchronized.')
+   S.savePreset(tune,T.presetName or'Last multiplayer tune');T.status('Tune applied')
   end
   if T.ui then T.ui.refresh=true end
  end
@@ -80,6 +80,11 @@ return function(T)
   elseif p.op=='telemetry'then
    local a=valid(pc.Vehicle)and pc.Vehicle or peer.driven;local m=valid(a)and V.motor(a)
    if valid(m)and V.id(a,m)==p.id then N.acceptTelemetry(p.id,p.data)end
+  elseif p.op=='buyNitrous'then
+   assert(now()>=(peer.orderAt or 0),'Order pending');peer.orderAt=now()+.5
+   local service=T.induction.nitrous
+   assert(service.buy,'Update Beyond Apocalypse to order here')
+   N.send(pc,{op='notice',message=service.buy(pc,p.variant)})
   elseif p.op=='laptop'then assert(T.laptop,'Laptop unavailable');T.laptop.request(pc,p)
   else error('Unknown tuning message')end
  end
@@ -108,7 +113,7 @@ return function(T)
   assert(N.connected,'The host needs Beyond Tuning 1.1 or newer. Waiting for its response.')
   local r=assert(V.current,'Sit in a car with an engine first');assert(r.id,'The car needs a persistent identity')
   N.serial=N.serial+1;N.pending={serial=N.serial,at=now()}
-  N.call({op='apply',id=r.id,tune=P.validate(tune),request=N.serial});T.status('Sending tune to host; waiting for the saved confirmation...')
+  N.call({op='apply',id=r.id,tune=P.validate(tune),request=N.serial});T.status('Applying tune…')
  end
  function N.telemetry(id)
   local entry=id and N.remote[id];if entry and now()-entry.received<2 then return P.copy(entry.data)end

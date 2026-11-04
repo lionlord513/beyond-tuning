@@ -1,10 +1,10 @@
 {
   "Id": "beyondtuning",
   "Name": "Beyond Tuning",
-  "Version": "1.1.2",
+  "Version": "1.2.0",
   "Channel": "stable",
-  "Description": "Car Tuning with engine-specific Drift/Race examples, multiplayer calibration and live telemetry, a folding portable laptop, persistent tunes and optional BA nitrous.",
-  "Changelog": "Closed laptops use native Remove on a mount and Take on the ground. Beyond Apocalypse backpacks show Tuner Laptop with a dedicated icon. Exiting fullscreen restores controls even if the screen snapshot fails.",
+  "Description": "Car Tuning, a portable laptop, standalone nitrous and multiplayer tunes for Drive Beyond Horizons.",
+  "Changelog": "Visible native laptop pickup and wider mount selection. Nitrous bottles, loot, buying and boost now belong to Beyond Tuning. Shorter tuner messages.",
   "Dependencies": [
     "UE4SS"
   ],

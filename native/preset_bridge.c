@@ -37,6 +37,29 @@ __declspec(dllexport) int bt_commit_backpack_loader(void *state){
  path(pending,L"..\\BeyondApocalypse\\Scripts\\main.lua.bt-pending");
  MoveFileExW(pending,target,MOVEFILE_REPLACE_EXISTING|MOVEFILE_WRITE_THROUGH);return 0;
 }
+/* Migrate native-save sidecars before a player removes the old mod. These
+ * records are immutable. An existing Tuning snapshot always wins. */
+__declspec(dllexport) int bt_import_nitrous_saves(void *state){
+ init();
+ const wchar_t *folders[]={L"..\\BeyondApocalypse\\state",L"..\\BasicM4\\state"};
+ for(int i=0;i<2;i++){
+  wchar_t dir[32768],query[32768],src[32768],dst[32768],tmp[32768];
+  path(dir,folders[i]);swprintf(query,32768,L"%ls\\nitrous-*.txt",dir);
+  WIN32_FIND_DATAW f;HANDLE h=FindFirstFileW(query,&f);
+  if(h==INVALID_HANDLE_VALUE)continue;
+  do{
+   if(f.dwFileAttributes&(FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_REPARSE_POINT))continue;
+   if(f.nFileSizeHigh||f.nFileSizeLow>4194304)continue;
+   swprintf(src,32768,L"%ls\\%ls",dir,f.cFileName);
+   swprintf(dst,32768,L"%ls\\state\\%ls",root,f.cFileName);
+   if(GetFileAttributesW(dst)!=INVALID_FILE_ATTRIBUTES)continue;
+   swprintf(tmp,32768,L"%ls.import",dst);
+   if(CopyFileW(src,tmp,FALSE)&&!MoveFileExW(tmp,dst,MOVEFILE_WRITE_THROUGH))DeleteFileW(tmp);
+  }while(FindNextFileW(h,&f));
+  FindClose(h);
+ }
+ return 0;
+}
 static int transfer(const wchar_t *file){
  wchar_t dest[32768],tmp[32768];
  HANDLE h=CreateFileW(file,GENERIC_READ,FILE_SHARE_READ,0,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,0);
