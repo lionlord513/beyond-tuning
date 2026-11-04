@@ -1,5 +1,5 @@
 return function(T)
- local L={items={},actors={},data={},helpers={},transient={},dirty=true,price=250};local valid=T.valid
+ local L={items={},actors={},data={},helpers={},transient={},dirty=true,price=1000};local valid=T.valid
  local S,V,N,J=T.storage,T.vehicle,T.network,T.json
  local visual=dofile(T.root..'/Scripts/laptop_visual.lua')(T);L.visual=visual
  local game=StaticFindObject('/Script/Engine.Default__GameplayStatics')
@@ -8,6 +8,7 @@ return function(T)
  local loadBase=dofile(T.root..'/Scripts/nitrous/collider.lua')(T.root,valid,'/assets/laptop/base.gltf')
  local identity={Translation={X=0,Y=0,Z=0},Rotation={X=0,Y=0,Z=0,W=1},Scale3D={X=1,Y=1,Z=1}}
  local carrierPath='/Game/BP/Items/Master/AttachableMaster.AttachableMaster_C'
+ local donorPath='/Game/BP/Items/Movable/Attachable/BP_Gift_Noeud.BP_Gift_Noeud_C'
  local helperPath='/Game/BP/Items/Master/ItemSavableMaster.ItemSavableMaster_C'
  local function same(a,b)return valid(a)and valid(b)and a:GetAddress()==b:GetAddress()end
  local function marker(a)
@@ -18,7 +19,7 @@ return function(T)
  local function takeName(r)return L.attached(r)and'Remove'or'Take'end
  function L.persist()
   assert(S.world,'Waiting for world save identity')
-  S.write(T.root..'/state/laptops-'..S.world..'.json',J.encode({schema=1,items=L.data}))
+  S.write(T.root..'/state/laptops-'..S.world..'.json',J.encode({schema=1,items=L.data,lootSites=L.lootSites}))
  end
  function L.sync(pc)
   for id,data in pairs(L.data)do N.send(pc,{op='laptops',id=id,closed=data.closed})end
@@ -102,6 +103,7 @@ return function(T)
   end
   visual.fold(r,closed)
   if valid(r.screenHit)then r.screenHit:SetCollisionEnabled(closed and 0 or 1)end
+  if valid(r.helper)then r.helper:SetActorEnableCollision(not closed or L.attached(r))end
   if valid(r.actor)and r.actor:HasAuthority()then r.actor:ForceNetUpdate()end
  end
  function L.skin(a,id)
@@ -113,36 +115,63 @@ return function(T)
   if S.read(path,4*1024*1024)then local tex=StaticFindObject('/Script/Engine.Default__KismetRenderingLibrary'):ImportFileAsTexture2D(a,path);if valid(tex)then r.screenMaterial:SetTextureParameterValue(FName('SlateUI'),tex)end end
   return r
  end
- function L.spawn(pc,at)
+ function L.spawn(pc,at,site)
   assert(valid(pc)and pc:HasAuthority(),'Host unavailable')
   assert(S.world,'Save your world before ordering a laptop')
   local p=pc.PlayerControlled;assert(valid(p),'Player unavailable')
   local a,final
   local ok,e=pcall(function()
    local tr={Translation=at,Rotation={X=0,Y=0,Z=0,W=1},Scale3D={X=1,Y=1,Z=1}}
-   a=game:BeginDeferredActorSpawnFromClass(p,LoadAsset(carrierPath),tr,1,nil,0);assert(valid(a),'Laptop spawn failed')
-   local id=actorId(a);configureCarrier(a,id);game:FinishSpawningActor(a,tr,0)
+   a=game:BeginDeferredActorSpawnFromClass(p,LoadAsset(donorPath),tr,1,nil,0);assert(valid(a),'Laptop spawn failed')
+   game:FinishSpawningActor(a,tr,0)
+   configureCarrier(a)
    T.delivery.place(a,a.RootMeshComponent,at)
    -- BeginPlay assigns the final persistent GUID.
    final=actorId(a);mark(a,final)
-   L.data[final]={closed=false};L.skin(a,final);L.persist();broadcast(final)
+   L.data[final]={closed=site~=nil};L.skin(a,final);if site then L.lootSites[site]=final end;L.persist();broadcast(final)
    a:FlushNetDormancy();a:ForceNetUpdate()
   end)
-  if not ok then if valid(a)then a:K2_DestroyActor()end;if final then L.data[final]=nil;pcall(L.persist)end;error(e)end
+  if not ok then if valid(a)then a:K2_DestroyActor()end;if final then L.data[final]=nil;if site then L.lootSites[site]=nil end;pcall(L.persist)end;error(e)end
   return 'Tuner Laptop delivered beside you'
+ end
+ local hash=dofile(T.root..'/Scripts/nitrous/policy.lua').hash
+ function L.loot()
+  if not L.world or not L.lootSites then return end
+  local pc=V.pc();local p=valid(pc)and pc.PlayerControlled
+  if not valid(p)or not pc:HasAuthority()or not p.IsInitialized or game:GetGameInstance(p).IsSaving then return end
+  local gs=game:GetGameState(p);local spawner=valid(gs)and gs.LSLevelSpawner
+  if not valid(spawner)then return end
+  local pos=p:K2_GetActorLocation();local location,site
+  spawner.LevelsRep:ForEach(function(_,entry)
+   if location then return end
+   local level=entry:get();if not level.HasBeenInitialized then return end
+   local path=level.WorldSoftObjectPtrPath:ToString():lower()
+   if not(path:find('garage',1,true)or path:find('gasstation',1,true)or path:find('house',1,true)or path:find('motel',1,true))then return end
+   local at=level.Transform.Translation;local key=('%s@%.0f,%.0f,%.0f'):format(path,at.X,at.Y,at.Z)
+   local dist=(pos.X-at.X)^2+(pos.Y-at.Y)^2
+   if dist>18000^2 or L.lootSites[key]then return end
+   local h=hash(tostring(gs.Seed)..'|laptop|'..key)
+   h=((h~(h>>16))*0x85ebca6b)&0xffffffff;h=((h~(h>>13))*0xc2b2ae35)&0xffffffff;h=h~(h>>16)
+   if h%64==0 then site=key;location={X=at.X+((h//64)%7-3)*90,Y=at.Y+((h//448)%7-3)*90,Z=at.Z}end
+  end)
+  if not location then return end
+  local sys=StaticFindObject('/Script/Engine.Default__KismetSystemLibrary');local hit={};local col={R=0,G=0,B=0,A=0};local at=location
+  if not sys:LineTraceSingle(p,{X=at.X,Y=at.Y,Z=at.Z+190},{X=at.X,Y=at.Y,Z=at.Z-240},0,false,{p},0,hit,true,col,col,0)or hit.ImpactNormal.Z<.85 then return end
+  local spot={X=at.X,Y=at.Y,Z=hit.ImpactPoint.Z+16}
+  if not sys:BoxTraceSingle(p,spot,{X=spot.X,Y=spot.Y,Z=spot.Z+1},{X=23,Y=24,Z=8},{Pitch=0,Yaw=0,Roll=0},0,false,{p},0,{},true,col,col,0)then L.spawn(pc,spot,site)end
  end
  function L.buy(pc)
   return T.delivery.purchase(pc,L.price,function(at)return L.spawn(pc,at)end)
  end
  function L.order()
-  local pc=V.pc();if pc:HasAuthority()then T.status(L.buy(pc))else assert(N.connected,'Host needs Beyond Tuning');N.call({op='laptop',action='buy'})end
+  local pc=V.pc();if pc:HasAuthority()then T.ui.orderStatus(L.buy(pc))else assert(N.connected,'Host needs Beyond Tuning');assert(not L.orderPending,'Order pending');L.orderPending=true;N.call({op='laptop',action='buy'})end
  end
  function L.disconnect(pc)
   local address=pc:GetAddress()
   for _,r in pairs(L.items)do if r.users then r.users[address]=nil;if not next(r.users)and valid(r.proxy)then r.proxy:K2_DestroyActor();r.proxy=nil end end end
  end
  function L.request(pc,p)
-  if p.action=='buy'then N.send(pc,{op='notice',message=L.buy(pc)});return end
+  if p.action=='buy'then N.send(pc,{op='laptopReceipt',message=L.buy(pc)});return end
   local r=assert(L.items[p.id],'Laptop unavailable');assert(valid(r.actor),'Laptop unavailable')
   if p.action~='close' then
    assert(valid(pc.PlayerControlled),'Player unavailable')
@@ -251,7 +280,7 @@ return function(T)
   end
  end
  function L.install()
-  if L.hooks then return end;LoadAsset(helperPath);L.hooks={}
+  if L.hooks then return end;LoadAsset(donorPath);LoadAsset(helperPath);L.hooks={}
   local base='/Game/BP/Items/Master/ItemSavableMaster.ItemSavableMaster_C:'
   L.hooks[1]={RegisterHook(base..'ExecutePrimaryAction',function(ctx,pressed,pc,component)
    local a=ctx:get();local r=valid(a)and L.helpers[a:GetAddress()]
@@ -267,7 +296,7 @@ return function(T)
   local function interaction(ctx,pressed,pc,component,primary)
    local a=ctx:get();local r=valid(a)and L.actors[a:GetAddress()];if not r then return end;local id=r.id;local caller=pc:get()
    if not valid(caller) then return end
-   local previousHolder=r.holder
+   local previousHolder=r.holder;local pressedDown=pressed:get();local wasMounted=L.attached(r)
    local after={};caller:GetItemInHand(after)
    r.holder=same(after.Item,a) and caller or nil
    local hit=component:get()
@@ -282,7 +311,8 @@ return function(T)
     end
     local held={};if valid(caller)then caller:GetItemInHand(held)end
     local inHand=same(held.Item,a)
-    if valid(r.helper) then r.helper:SetActorEnableCollision(not inHand) end
+    if valid(r.helper)then r.helper:SetActorEnableCollision(not inHand and (not r.closed or L.attached(r)))end
+    if not primary and pressedDown and r.closed and not previousHolder and not inHand and not wasMounted and same(caller,V.pc())then L.toggle(r)end
     if inHand then
      a:SetActorTickEnabled(true)
      if valid(a.AttachableComponent) then a.AttachableComponent:SetComponentTickEnabled(true) end
@@ -309,13 +339,16 @@ return function(T)
    local r=L.helpers[ctx:get():GetAddress()];if r then out:set(FText(r.closed and'Open lid'or'Close lid'))end
   end)}
   L.hooks[12]={RegisterHook(attach..'ForcePrimaryAction',function(ctx,pc,out)
-   local r=L.actors[ctx:get():GetAddress()];if r and r.closed and not valid(r.holder)then out:set(true)end
+   local r=L.actors[ctx:get():GetAddress()];if r and r.closed and not valid(r.holder)and L.attached(r)then out:set(true)end
   end)}
   L.hooks[13]={RegisterHook(attach..'GetPrimaryActionName',function(ctx,out)
-   local r=L.actors[ctx:get():GetAddress()];if r and not valid(r.holder)then out:set(FText(r.closed and takeName(r)or 'Use laptop'))end
+   local r=L.actors[ctx:get():GetAddress()];if r and not valid(r.holder)and (not r.closed or L.attached(r))then out:set(FText(r.closed and 'Remove'or 'Use laptop'))end
+  end)}
+  L.hooks[17]={RegisterHook(attach..'GetSecondaryActionName',function(ctx,out)
+   local r=L.actors[ctx:get():GetAddress()];if r and r.closed and not valid(r.holder)and not L.attached(r)then out:set(FText('Open lid'))end
   end)}
   L.hooks[14]={RegisterHook('/Game/BP/Items/Master/ItemBaseMaster.ItemBaseMaster_C:GetName',function(ctx,out)
-   local a=ctx:get();if L.actors[a:GetAddress()]or(a:GetFullName():match('^AttachableMaster_C ')and L.data[actorId(a)])then out:set(FText('Tuner Laptop'))end
+   local a=ctx:get();if L.actors[a:GetAddress()]or((a:GetFullName():match('^AttachableMaster_C ') or a:GetFullName():match('^BP_Gift_Noeud_C '))and L.data[actorId(a)])then out:set(FText('Tuner Laptop'))end
   end)}
   local restore='/Game/BP/Components/BP_InventoryComponent.BP_InventoryComponent_C:GetItemFromSlot'
   L.hooks[15]={RegisterHook(restore,function(ctx,slot,force,position,remove,defer,item)
@@ -333,13 +366,14 @@ return function(T)
    if valid(r.helper)then local h=r.helper:GetAddress();L.helpers[h]=nil;L.transient[h]=nil;r.helper:K2_DestroyActor()end
    if L.active==r then T.enqueue(function()if L.active==r then L.close()end end)end
   end)}
-  NotifyOnNewObject(carrierPath,function()L.dirty=true end)
+  local function discover()L.dirty=true end
+  NotifyOnNewObject(carrierPath,discover);NotifyOnNewObject(donorPath,discover)
  end
  function L.tick()
   if not S.ready or not S.world then return end;L.install()
   if L.world~=S.world then
    L.world=S.world;local saved=S.recover(T.root..'/state/laptops-'..S.world..'.json',J.decode,1024*1024)
-   local incoming=L.data;L.data=saved and saved.items or{};for id,d in pairs(incoming)do L.data[id]=d end;L.dirty=true
+   local incoming=L.data;L.lootSites=saved and saved.lootSites or{};L.data=saved and saved.items or{};for id,d in pairs(incoming)do L.data[id]=d end;L.dirty=true
   end
   if L.discoverUntil then
    local time=game:GetTimeSeconds(V.player());local missing=false;for id in pairs(L.data)do if not L.items[id]then missing=true;break end end
@@ -394,7 +428,7 @@ return function(T)
   if L.active then pcall(L.close)end
   L.cancelCapture()
   for _,r in pairs(L.items)do if valid(r.helper)then r.helper:K2_DestroyActor()end;visual.destroy(r)end
-  L.items={};L.actors={};L.data={};L.helpers={};L.colliders={};L.transient={};L.world=nil;L.active=nil;L.capture=nil;L.dirty=true
+  L.items={};L.actors={};L.data={};L.helpers={};L.colliders={};L.transient={};L.world=nil;L.lootSites=nil;L.orderPending=nil;L.active=nil;L.capture=nil;L.dirty=true
  end
  return L
 end

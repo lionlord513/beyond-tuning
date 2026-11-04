@@ -1,5 +1,9 @@
 # Validation
 
+## Version 1.2.2
+
+Checked the desktop shortcut with insufficient funds and an exact $1,000 charge for one delivered laptop. The native player primary action took a folded laptop through its real physical mesh, kept it in hand while moving, and released it on drop. The same check passed for an older generic carrier. The loot regression selected 59 of 4,096 test sites and skipped revisits and non-host players. The 10,000-update idle laptop regression passed. Separate-PC multiplayer was not exercised.
+
 ## Version 1.2.1
 
 On build 26106988, the Boost purchase button delivered a full Stage II 10 L bottle within reach and charged $4,400. A cold reload retained the original car ID, mounted bottle ID and 3.75 L. A simulated missing bottle was recovered once at its saved mount with 1.25 L. With both gameplay mods and the local host tools enabled, the host menu delivered a laptop at no charge. The idle laptop regression completed 10,000 updates without engine calls. Two separate networked PCs were not used for these checks.

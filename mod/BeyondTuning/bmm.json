@@ -1,10 +1,10 @@
 {
   "Id": "beyondtuning",
   "Name": "Beyond Tuning",
-  "Version": "1.2.1",
+  "Version": "1.2.2",
   "Channel": "stable",
   "Description": "Tune your car, fit nitrous and take a laptop on the road.",
-  "Changelog": "Fixed nitrous orders failing to arrive.\nFixed mounted bottles losing their attachment or remaining nitrous on reload.",
+  "Changelog": "Moved laptop purchases to the computer desktop. Laptops cost $1,000.\nAdded rare laptop loot at roadside buildings.\nFixed picking up a closed laptop and opening its lid while wearing a backpack.",
   "Dependencies": [
     "UE4SS"
   ],

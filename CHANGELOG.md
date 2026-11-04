@@ -1,3 +1,9 @@
+# Beyond Tuning 1.2.2
+
+- Moved laptop purchases to the computer desktop. Laptops cost $1,000.
+- Added rare laptop loot at roadside buildings.
+- Fixed picking up a closed laptop and opening its lid while wearing a backpack.
+
 # Beyond Tuning 1.2.1
 
 - Fixed nitrous orders failing to arrive.

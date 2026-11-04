@@ -6,7 +6,7 @@ Tune the last car you sat in from any in-game computer. Pick a Drift or Race pre
 
 - Sit in a car, open Car Tuning on a computer and choose File > Presets. Pick a tune and select Apply.
 - To share a tune, choose File > Export. To import one, drop its JSON file into the import window.
-- Buy a Tuner Laptop for $250 under File > Laptop. Right-click the lid to open or close it. Left-click the screen to use it or the closed laptop to remove or take it.
+- Buy a Tuner Laptop for $1,000 on the computer desktop, or find one as rare loot. Right-click the lid to open or close it. Left-click the screen to use it or the closed laptop to remove or take it.
 - Order a bottle under Boost and fit it to your car. Hold Shift to boost. Lower injection for a longer boost or raise it for more power.
 - With Beyond Apocalypse, take the laptop and drag Hands into an empty backpack slot to store it.
 

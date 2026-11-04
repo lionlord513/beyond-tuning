@@ -105,13 +105,14 @@ return function(T)
   elseif p.op=='delivery'then T.delivery.pending=nil;T.delivery.note(p.message)
   elseif p.op=='error'then
    N.pending=nil
-   if T.delivery.pending then T.delivery.pending=nil;T.delivery.note(p.message)else T.status('Host: '..tostring(p.message))end
+   if T.laptop.orderPending then T.laptop.orderPending=nil;T.ui.orderStatus(p.message)elseif T.delivery.pending then T.delivery.pending=nil;T.delivery.note(p.message)else T.status('Host: '..tostring(p.message))end
   elseif p.op=='telemetry'then N.acceptTelemetry(p.id,p.data)
   elseif p.op=='stream'then N.stream=p.id;N.streamUntil=now()+5
   elseif p.op=='nitrousForce'then
    assert(type(p.force)=='number'and p.force>=0 and p.force<1e9 and type(p.base)=='number'and p.base>=0 and p.base<1e9,'Invalid boost force')
    local a=find(p.id);if valid(a)then T.induction.nitrous.remote={actor=a,force=p.force,base=p.base,untilTime=now()+.4}end
   elseif p.op=='laptops'and T.laptop then T.laptop.receive(p)
+  elseif p.op=='laptopReceipt'then T.laptop.orderPending=nil;T.ui.orderStatus(p.message)
   elseif p.op=='notice'then T.status(p.message)
   elseif p.op=='laptopOpened'and T.laptop then T.laptop.waiting={id=p.id,untilTime=now()+8}
   end

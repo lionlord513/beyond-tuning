@@ -5,11 +5,22 @@ return function(M,root)
  N.tunerLaptopBridge=true
  local function valid(o)return o and o:IsValid()end
  local function laptop(a)
-  if not valid(a)or not a:GetFullName():match('^AttachableMaster_C ')then return false end
+  if not valid(a)or not (a:GetFullName():match('^AttachableMaster_C ') or a:GetFullName():match('^BP_Gift_Noeud_C '))then return false end
   local out={};a:GetName(out)
   if out.Name and out.Name:ToString()=='Tuner Laptop'then return true end
   for _,v in ipairs(a:K2_GetComponentsByClass(StaticFindObject('/Script/Engine.SceneComponent')))do if v:get().AttachSocketName:ToString():match('^BT_Laptop_%x+$')then return true end end
   return false
+ end
+ -- RMB belongs to the lid. Quick-store would otherwise consume the same click
+ -- and serialize/destroy the physical item instead of letting it open or close.
+ local looked=N.looked
+ N.looked=function(pc,id)
+  local item=looked(pc,id);if not valid(item)then return end
+  if laptop(item)then return end
+  if item:GetFullName():match('^ItemSavableMaster_C ')then
+   local parent=item:GetAttachParentActor();if valid(parent) and laptop(parent)then return end
+  end
+  return item
  end
  local itemName,title,icon=M.itemName,N.title,N.icon
  M.itemName=function(a)
@@ -30,7 +41,7 @@ return function(M,root)
   if not valid(b)and label=='Attachable Master'and M.backpack.ui and valid(M.backpack.ui.bag)and M.backpack.ui.bag:HasAuthority()and valid(d.Class)then
    local token=N.token(d);if not resolved[token]then for slot,entry in pairs(N.nativeData(M.backpack.ui.bag))do if N.token(entry)==token then b=M.backpack.ui.bag;k=slot;break end end end
   end
-  if valid(b)and b:HasAuthority()and valid(d.Class)and d.Class:GetFullName():match('%.AttachableMaster_C$')then
+  if valid(b)and b:HasAuthority()and valid(d.Class)and (d.Class:GetFullName():match('%.AttachableMaster_C$') or d.Class:GetFullName():match('%.BP_Gift_Noeud_C$'))then
    local token=N.token(d)
    if not resolved[token]then
     resolved[token]=true;local a

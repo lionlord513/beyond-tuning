@@ -60,7 +60,7 @@ return function(T)
    {'03  Apply and test','Apply works from the driver seat, even while moving. Changes and a reusable preset are saved immediately.','Compare on the same road. Race uses maximum output: watch heat, fuel and traction. Save to keep the car itself.'},
    {'04  Fine-tune the table','Click a cell, then use -5 / +5. Rows are pedal position; columns are RPM across your engine redline.','100 is stock. 110 adds 10% torque in that region. Values blend smoothly between neighboring cells.'},
    {'05  Import, export and share','File > Import opens a drop window. Drag one preset JSON onto it, or click Browse. Review, then Apply.','File > Export opens Save As. File > Save preset stores a reusable copy; Preset folder opens it in Explorer.'},
-   {'06  Use your portable computer','File > Laptop: $250. Right-click the lid to fold; left-click the open screen to use. Esc exits.','Closed: left-click to Remove from a mount or Take from the ground. In a BA backpack, drag Hands to a slot.'},
+   {'06  Use your portable computer','Buy a laptop on the computer desktop for $1,000. Right-click the lid. Click the open screen to use it.','Closed: left-click to Remove from a mount or Take from the ground. In a BA backpack, drag Hands to a slot.'},
   }
   for i,row in ipairs(lines)do local y=166+(i-1)*98;label(p,row[1],42,y,1300,28,19,U.accent);label(p,row[2],42,y+31,1300,24,16);label(p,row[3],42,y+55,1300,24,16,U.muted)end
   label(p,'Multiplayer: everyone needs this mod. Host saves tunes; the driver supplies live telemetry. Esc freezes the laptop screen.',42,778,1300,26,15,U.muted)
@@ -104,7 +104,6 @@ return function(T)
   button(p,'< Previous',42,696,180,40,function()U.presetPage=math.max(1,U.presetPage-1);refresh()end)
   button(p,'Next >',240,696,180,40,function()U.presetPage=math.min(math.max(1,math.ceil(#list/12)),U.presetPage+1);refresh()end)
   label(p,'Page '..U.presetPage..'  /  '..#list..' presets',448,705,460,30,17,U.muted)
-  button(p,'Laptop / Buy for $250',1010,696,330,44,function()T.laptop.order()end,true,16)
  end
  local function boost()
   local p=sheet('BOOST / Nitrous injection and individual turbos');local I=T.induction;local a=V.last
@@ -267,18 +266,37 @@ return function(T)
   U.menu=nil;U.render();lib:SetInputMode_UIOnlyEx(U.pc,c,0,false)
  end
  function U.build(hud,pc)
-  U.pc=pc;colors();local desktop=hud.BT_CarPart:GetParent():GetParent();local box=new('SizeBox',hud.WidgetTree);box:SetWidthOverride(200);box:SetHeightOverride(200);desktop:AddChildToHorizontalBox(box);U.app=box
+  U.pc=pc;colors();local desktop=hud.BT_CarPart:GetParent():GetParent()
+  local box=new('SizeBox',hud.WidgetTree);box:SetWidthOverride(200);box:SetHeightOverride(200);desktop:AddChildToHorizontalBox(box);U.app=box
   local overlay=new('Overlay',hud.WidgetTree);box:AddChild(overlay);local cv=new('CanvasPanel',hud.WidgetTree);fill(overlay:AddChildToOverlay(cv))
-  local texture=StaticFindObject('/Script/Engine.Default__KismetRenderingLibrary'):ImportFileAsTexture2D(hud,T.root..'/assets/icon.png');U.iconTexture=texture
-  local im=rect(cv,30,6,140,140,color(1,1,1));im:SetBrushFromTexture(texture,false);label(cv,'CAR TUNING',28,154,172,35,18,color(1,1,1));U.icon=surface(overlay,U.open)
+  local loader=StaticFindObject('/Script/Engine.Default__KismetRenderingLibrary')
+  local icon=rect(cv,30,6,140,140,color(1,1,1));icon:SetBrushFromTexture(loader:ImportFileAsTexture2D(hud,T.root..'/assets/icon.png'),false)
+  label(cv,'CAR TUNING',28,154,172,35,18,color(1,1,1));U.icon=surface(overlay,U.open)
+  U.orderLaptop=function()
+   local now=os.clock();if now<(U.nextOrder or 0)then return end;U.nextOrder=now+1
+   local ok,e=pcall(T.laptop.order);if not ok then U.orderStatus(tostring(e):gsub('^.-:%d+: ','')) end
+  end
+  -- A separate anchored button stays readable even when other mods fill the app row.
+  local shop=new('Overlay',hud.WidgetTree);U.shop=shop;local slot=desktop:GetParent():AddChildToCanvas(shop)
+  slot:SetAnchors({Minimum={X=1,Y=1},Maximum={X=1,Y=1}});slot:SetAlignment({X=1,Y=1});slot:SetPosition({X=-25,Y=-85});slot:SetSize({X=278,Y=74})
+  local panel=new('CanvasPanel',hud.WidgetTree);fill(shop:AddChildToOverlay(panel))
+  rect(panel,0,0,278,74,color(.025,.045,.075,.97));rect(panel,0,0,4,74,U.accent)
+  local laptop=rect(panel,10,8,62,58,color(1,1,1));laptop:SetBrushFromTexture(loader:ImportFileAsTexture2D(hud,T.root..'/assets/laptop/icon.png'),false)
+  label(panel,'Buy Tuner Laptop',82,9,190,31,18,color(1,1,1))
+  U.shopLabel=label(panel,'$1,000',82,43,190,26,14,color(.66,.87,1));U.shopIcon=surface(shop,U.orderLaptop)
   if not U.hook then U.hook={RegisterHook('/Game/BP/Garage/PaintStation/UI/ColorElement.ColorElement_C:OnMouseButtonDown',function(ctx,_,mouse)
    local target=ctx:get();if not valid(target)then return end;local id=target:GetAddress();local fn=U.hits[id]
-   if valid(U.icon)and id==U.icon:GetAddress()then fn=U.open end;if not fn then return end
+   if valid(U.icon)and id==U.icon:GetAddress()then fn=U.open elseif valid(U.shopIcon)and id==U.shopIcon:GetAddress()then fn=U.orderLaptop end;if not fn then return end
    if StaticFindObject('/Script/Engine.Default__KismetInputLibrary'):PointerEvent_GetEffectingButton(mouse:get()).KeyName:ToString()=='LeftMouseButton'then
     if not U.pending[id]then U.pending[id]=true;local gen=U.generation;T.enqueue(function()if gen==U.generation then local ok,e=pcall(fn);if not ok then T.status(e)end end;U.pending[id]=nil end)end
    end;return lib:Handled()
   end)}end
   U.hud=hud
+ end
+ function U.orderStatus(message)
+  T.status(message);local label=U.shopLabel;if not valid(label)then return end
+  label:SetText(FText(message:find('delivered',1,true) and 'Delivered beside you' or message))
+  ExecuteInGameThreadWithDelay(4000,function()if valid(label)then label:SetText(FText('$1,000'))end end)
  end
  function U.tick()
   local pc=V.pc();local p=valid(pc)and pc.PlayerControlled;if not valid(p)or not valid(p.AC_EbaySystem)then return end
@@ -290,7 +308,7 @@ return function(T)
  end
  function U.reset()
   U.dragging=false;D.clearEngine()
-  if valid(U.ui)then U.ui:RemoveFromParent()end;if valid(U.app)then U.app:RemoveFromParent()end
+  if valid(U.ui)then U.ui:RemoveFromParent()end;if valid(U.app)then U.app:RemoveFromParent()end;if valid(U.shop)then U.shop:RemoveFromParent()end;U.shop=nil;U.shopIcon=nil;U.shopLabel=nil
   U.ui=nil;U.app=nil;U.icon=nil;U.hud=nil;U.pc=nil;U.opened=false;U.hits={};U.pending={};U.generation=U.generation+1;U.gaugeRT=nil;U.graphRT=nil
  end
  return U
