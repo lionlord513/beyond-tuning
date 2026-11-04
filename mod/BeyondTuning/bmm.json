@@ -1,10 +1,10 @@
 {
   "Id": "beyondtuning",
   "Name": "Beyond Tuning",
-  "Version": "1.2.3",
+  "Version": "1.2.4",
   "Channel": "stable",
   "Description": "Tune your car, fit nitrous and take a laptop on the road.",
-  "Changelog": "Fixed the laptop keyboard changing size when mounted.\nFixed laptops disappearing when removed from a car.\nClosed laptops can now be picked up from any side.",
+  "Changelog": "Fixed a multiplayer message handling issue that could cause crashes when joining.\nFixed host actions being triggered by replies meant for other players.",
   "Dependencies": [
     "UE4SS"
   ],

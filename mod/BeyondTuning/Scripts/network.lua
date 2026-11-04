@@ -1,6 +1,6 @@
 -- Reliable packets use the owning PlayerController's existing Unreal RPCs.
--- Marked packets are consumed before native console/chat processing. Nothing
--- opens a port, executes a console command, or sends public chat messages.
+-- Observe RPC parameters without changing engine-owned strings.
+-- Each receiver handles only its own controller and marked messages.
 return function(T)
  local N={peers={},remote={},revision={},serial=0,identities={},cars={}};local valid=T.valid
  local V,S,P,J=T.vehicle,T.storage,T.policy,T.json
@@ -129,14 +129,14 @@ return function(T)
  function N.install()
   if N.hooks then return end;N.hooks={}
   N.hooks[1]={RegisterHook('/Script/Engine.PlayerController:ServerExecRPC',function(ctx,msg)
-   local text=msg:get():ToString();if text:sub(1,#prefix)~=prefix then return end;msg:set('')
+   local text=msg:get():ToString();if text:sub(1,#prefix)~=prefix then return end
    local pc=ctx:get();if not valid(pc)or not pc:HasAuthority()or#text>1000 then return end
-   T.enqueue(function()local ok,e=pcall(function()N.receiveServer(pc,J.decode(text:sub(#prefix+1)))end);if not ok then N.send(pc,{op='error',message=tostring(e):gsub('^.-:%d+: ',''):sub(1,140)})end end)
+   T.enqueue(function()if not valid(pc)or not pc:HasAuthority()then return end;local ok,e=pcall(function()N.receiveServer(pc,J.decode(text:sub(#prefix+1)))end);if not ok then N.send(pc,{op='error',message=tostring(e):gsub('^.-:%d+: ',''):sub(1,140)})end end)
   end)}
   N.hooks[2]={RegisterHook('/Script/Engine.PlayerController:ClientMessage',function(ctx,msg,kind,life)
-   local text=msg:get():ToString();if text:sub(1,#prefix)~=prefix then return end;msg:set('');life:set(0)
-   if #text>32000 then return end
-   T.enqueue(function()local ok,e=pcall(function()N.receiveClient(J.decode(text:sub(#prefix+1)))end);if not ok then T.status('Tuning synchronization failed: '..tostring(e))end end)
+   local text=msg:get():ToString();if text:sub(1,#prefix)~=prefix then return end
+   local pc=ctx:get();if not valid(pc)or not pc:IsLocalPlayerController()or #text>32000 then return end
+   T.enqueue(function()if not valid(pc)or not pc:IsLocalPlayerController()then return end;local ok,e=pcall(function()N.receiveClient(J.decode(text:sub(#prefix+1)))end);if not ok then T.status('Tuning synchronization failed: '..tostring(e))end end)
   end)}
   local stateRPC='/Script/DriveBeyondHorizons.DBHPlayerController:Server_ReceiveNetState'
   if valid(StaticFindObject(stateRPC))then N.hooks[3]={RegisterHook(stateRPC,function()end,function(ctx,state,vehicle)

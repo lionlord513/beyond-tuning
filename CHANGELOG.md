@@ -1,3 +1,8 @@
+# Beyond Tuning 1.2.4
+
+Fixed a multiplayer message handling issue that could cause crashes when joining.
+Fixed host actions being triggered by replies meant for other players.
+
 # Beyond Tuning 1.2.3
 
 - Fixed the laptop keyboard changing size when mounted.

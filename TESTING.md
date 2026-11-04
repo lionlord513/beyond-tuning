@@ -1,5 +1,9 @@
 # Validation
 
+## Version 1.2.4
+
+Tested alongside Beyond Apocalypse 1.1.2 and MixTape Maker 0.1.1 on build 26437602. RPC regression checks reject writes to engine-owned message strings and reject replies addressed to another controller. The reported crashes failed in the native string allocator; the unsafe RPC writes have been removed. A second Steam account was unavailable, so this does not certify a two-player Steam join.
+
 ## Version 1.2.3
 
 Tested on Steam build 26437602 with Beyond Apocalypse and the host dev menu installed. Checked the folded pickup hull, mounted keyboard and lid scale, and native removal. The idle, loot, tuning and nitrous regressions were also run.
