@@ -1,3 +1,9 @@
+# Beyond Tuning 1.1.2
+
+- Closed laptops use the native Remove action on mounts and Take action on the ground.
+- Beyond Apocalypse backpacks identify the Tuner Laptop by name and icon and restore its usable model and lid state when retrieved.
+- Escape and Return to laptop restore gameplay input even when the screen snapshot fails. Temporary capture components are discarded on failure.
+
 # Beyond Tuning 1.1.1
 
 - Right-click the laptop lid/screen to open or close the lid.

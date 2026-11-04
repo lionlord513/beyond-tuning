@@ -29,6 +29,14 @@ static void init(void){
  p=wcsrchr(root,L'\\');if(p)*p=0; /* mod root */
  wchar_t d[32768];path(d,L"state");CreateDirectoryW(d,0);path(d,L"presets");CreateDirectoryW(d,0);
 }
+/* The Lua adapter has already validated and backed up BA's entry point. Commit
+ * the prepared sibling in one filesystem operation, including on Windows. */
+__declspec(dllexport) int bt_commit_backpack_loader(void *state){
+ wchar_t target[32768],pending[32768];init();
+ path(target,L"..\\BeyondApocalypse\\Scripts\\main.lua");
+ path(pending,L"..\\BeyondApocalypse\\Scripts\\main.lua.bt-pending");
+ MoveFileExW(pending,target,MOVEFILE_REPLACE_EXISTING|MOVEFILE_WRITE_THROUGH);return 0;
+}
 static int transfer(const wchar_t *file){
  wchar_t dest[32768],tmp[32768];
  HANDLE h=CreateFileW(file,GENERIC_READ,FILE_SHARE_READ,0,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,0);

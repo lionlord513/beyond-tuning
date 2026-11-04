@@ -1,5 +1,5 @@
 return function(T)
- local L={items={},data={},helpers={},transient={},dirty=true,price=250};local valid=T.valid
+ local L={items={},actors={},data={},helpers={},transient={},dirty=true,price=250};local valid=T.valid
  local S,V,N,J=T.storage,T.vehicle,T.network,T.json
  local visual=dofile(T.root..'/Scripts/laptop_visual.lua')(T);L.visual=visual
  local game=StaticFindObject('/Script/Engine.Default__GameplayStatics')
@@ -14,6 +14,8 @@ return function(T)
   for _,v in ipairs(a:K2_GetComponentsByClass(scene))do local c=v:get();local id=c.AttachSocketName:ToString():match('^BT_Laptop_(%x+)$');if id and#id==32 then return id,c end end
  end
  local function actorId(a)return S.guid(a.GuidUnique)end
+ function L.attached(r)return valid(r.actor)and r.actor:isAttachedFunction()end
+ local function takeName(r)return L.attached(r)and'Remove'or'Take'end
  function L.persist()
   assert(S.world,'Waiting for world save identity')
   S.write(T.root..'/state/laptops-'..S.world..'.json',J.encode({schema=1,items=L.data}))
@@ -49,7 +51,7 @@ return function(T)
   a.RootMeshComponent=c;a:SetActorScale3D({X=1,Y=1,Z=1});c:SetWorldScale3D({X=1,Y=1,Z=1});a.BaseRelativeScale={X=1,Y=1,Z=1}
   c:SetVisibility(false,false);c:SetHiddenInGame(true,false);c:SetCastShadow(false)
   c:SetMassOverrideInKg(FName('None'),3,true)
-  a.CanBeAttachedToTheCar=true;a.OvverideMass=3;a.BaseMass=3
+  a.CanBeAttachedToTheCar=true;a.CanBeInBackpack=true;a.OvverideMass=3;a.BaseMass=3
   if valid(a.AttachableComponent)then a.AttachableComponent:SetComponentTickEnabled(false)end
   return c
  end
@@ -99,8 +101,8 @@ return function(T)
  end
  function L.skin(a,id)
   local r=L.items[id];if r and same(r.actor,a)and valid(r.base)then return r end
-  if r then if valid(r.helper)then r.helper:K2_DestroyActor()end;visual.destroy(r)end
-  configureCarrier(a,id);if a:HasAuthority()then mark(a,id)end;r=visual.create(a);r.id=id;L.items[id]=r
+  if r then if valid(r.actor)then L.actors[r.actor:GetAddress()]=nil end;if valid(r.helper)then L.helpers[r.helper:GetAddress()]=nil;r.helper:K2_DestroyActor()end;visual.destroy(r)end
+  local c=configureCarrier(a,id);if a:HasAuthority()then mark(a,id)end;r=visual.create(a);r.id=id;r.colliderAddress=c:GetAddress();L.items[id]=r;L.actors[a:GetAddress()]=r
   L.helper(r);L.fold(r,L.data[id]and L.data[id].closed or false)
   local path=T.root..'/state/laptop-'..id..'.png'
   if S.read(path,4*1024*1024)then local tex=StaticFindObject('/Script/Engine.Default__KismetRenderingLibrary'):ImportFileAsTexture2D(a,path);if valid(tex)then r.screenMaterial:SetTextureParameterValue(FName('SlateUI'),tex)end end
@@ -143,7 +145,13 @@ return function(T)
   if p.action=='fold'then L.data[p.id].closed=not L.data[p.id].closed;L.persist();L.fold(r,L.data[p.id].closed);broadcast(p.id)
   elseif p.action=='pickup'then
    local held={};pc:GetItemInHand(held);assert(not valid(held.Item)or same(held.Item,r.actor),'Put down the item in your hands first')
-   if not same(held.Item,r.actor)then r.actor:ExecutePrimaryAction(true,pc,r.actor.RootMeshComponent,r.actor)end
+   if not same(held.Item,r.actor)then
+    local a=r.actor;local mesh=a.RootMeshComponent
+    -- Native secondary is Remove for attached items; native primary is Take
+    -- for loose items. Let the game own attachment lists, hands and physics.
+    if L.attached(r)then a:ExecuteSecondaryAction(true,pc,mesh,a,mesh:K2_GetComponentToWorld())
+    else a:ExecutePrimaryAction(true,pc,mesh,a)end
+   end
   elseif p.action=='open'then assert(not r.closed,'Open the lid first');L.createProxy(r);r.users=r.users or{};r.users[pc:GetAddress()]=true;N.send(pc,{op='laptopOpened',id=r.id})
   elseif p.action=='close'then
    if r.users then r.users[pc:GetAddress()]=nil end
@@ -177,29 +185,60 @@ return function(T)
  end
  function L.show(r,proxy)
   assert(not r.closed,'Open the lid first')
-  local p=V.player();r.proxy=proxy;r.hadDesktop=false;L.active=r;p.AC_EbaySystem['Open PC'](p.AC_EbaySystem,proxy);L.openPending=true
+  local p=V.player();r.pc=V.pc();r.pawn=p;r.proxy=proxy;r.hadDesktop=false
+  r.menu=r.pc['BP Menu Component'];if not valid(r.menu)then r.menu=r.pc.BP_MenuComponent end
+  if valid(r.menu)then r.oldPause=r.menu.CanOpenPauseMenu end
+  L.active=r
+  local ok,e=pcall(function()p.AC_EbaySystem['Open PC'](p.AC_EbaySystem,proxy)end)
+  if not ok then L.close();error(e)end;L.openPending=true
+ end
+ function L.cancelCapture()
+  local c=L.capture;L.capture=nil
+  if c and valid(c.component)then
+   pcall(function()c.component:SetComponentTickEnabled(false)end)
+   pcall(function()c.component:SetWidget(nil)end)
+   pcall(function()c.component:K2_DestroyComponent(c.r.actor)end)
+  end
  end
  function L.freeze(r,widget)
   if not valid(widget)then return end
-  if L.capture then local c=L.capture.component;if valid(c)then c:SetWidget(nil);c:K2_DestroyComponent(L.capture.r.actor)end;L.capture=nil end
+  L.cancelCapture()
   local width,height=1400,900
   if T.ui.opened and valid(widget.CP_RSPartWindow)then
    local panel=widget.CP_RSPartWindow;panel.Slot:SetAnchors({Minimum={X=0,Y=0},Maximum={X=0,Y=0}});panel.Slot:SetPosition({X=0,Y=0});panel:SetRenderScale({X=1,Y=1})
   end
   local wc=r.actor:AddComponentByClass(StaticFindObject('/Script/UMG.WidgetComponent'),true,identity,false)
+  L.capture={r=r,component=wc,frames=0,width=width,height=height}
   wc:SetDrawSize({X=width,Y=height});wc:SetManuallyRedraw(true);wc:SetTickWhenOffscreen(true);wc:SetCollisionEnabled(0)
   wc:SetTickMode(0);wc:SetComponentTickEnabled(true);wc:SetVisibility(true,false);wc:SetHiddenInGame(false,false)
   wc:K2_SetWorldLocation({X=0,Y=0,Z=-50000},false,{},true);widget:RemoveFromParent();wc:SetWidget(widget);wc:RequestRedraw()
-  L.capture={r=r,component=wc,frames=0,width=width,height=height}
  end
  function L.close()
   local r=L.active;if not r then return end
+  -- Exit is unconditional. Snapshot/native-desktop failures must never strand
+  -- the player in UI-only input or prevent the remaining cleanup steps.
+  L.active=nil;L.waiting=nil;L.openPending=false
   r.session={app=T.ui.opened,mode=T.ui.mode,menu=T.ui.menu}
-  local widget=T.ui.opened and T.ui.ui or T.ui.hud;L.freeze(r,widget)
+  local widget=T.ui.opened and T.ui.ui or T.ui.hud;local hud=T.ui.hud;local app=T.ui.ui
+  local pc=valid(r.pc)and r.pc or V.pc();local p=valid(r.pawn)and r.pawn or V.player()
+  local function attempt(fn)local ok,e=pcall(fn);if not ok then print('[Beyond Tuning] Laptop exit: '..tostring(e)..'\n')end;return ok end
+  if not attempt(function()if valid(r.actor)then L.freeze(r,widget)end end)then L.cancelCapture()end
   T.ui.opened=false
-  local ebay=V.player().AC_EbaySystem;ebay.InBuyMenu=false;ebay:OnRep_InBuyMenu();ebay:DestroyHUD()
-  T.ui.reset();L.active=nil
-  if V.pc():HasAuthority()then L.request(V.pc(),{id=r.id,action='close'})else N.call({op='laptop',id=r.id,action='close'})end
+  local ebay=valid(p)and p.AC_EbaySystem
+  if valid(ebay)then
+   attempt(function()ebay.InBuyMenu=false;ebay:OnRep_InBuyMenu()end)
+   attempt(function()ebay:DestroyHUD()end)
+  end
+  attempt(function()if valid(app)then app:RemoveFromParent()end end)
+  attempt(function()if valid(hud)then hud:RemoveFromParent()end end)
+  attempt(T.ui.reset)
+  if valid(pc)then
+   attempt(function()pc:ResetIgnoreLookInput()end);attempt(function()pc:ResetIgnoreMoveInput()end)
+   attempt(function()if valid(p)then p:EnableInput(pc)end end)
+   attempt(function()pc.bShowMouseCursor=false;StaticFindObject('/Script/UMG.Default__WidgetBlueprintLibrary'):SetInputMode_GameOnly(pc,true)end)
+   attempt(function()if valid(r.menu)then r.menu.CanOpenPauseMenu=r.oldPause end end)
+   attempt(function()if pc:HasAuthority()then L.request(pc,{id=r.id,action='close'})else N.call({op='laptop',id=r.id,action='close'})end end)
+  end
  end
  function L.install()
   if L.hooks then return end;LoadAsset(helperPath);L.hooks={}
@@ -210,22 +249,27 @@ return function(T)
   end)}
   L.hooks[2]={RegisterHook(base..'CanExecuteActionInVehicle',function(ctx,pc,primary,out)if L.helpers[ctx:get():GetAddress()]then out:set(true)end end)}
   L.hooks[3]={RegisterHook(base..'ForcePrimaryAction',function(ctx,pc,out)if L.helpers[ctx:get():GetAddress()]then out:set(true)end end)}
-  L.hooks[4]={RegisterHook(base..'GetPrimaryActionName',function(ctx,out)local r=L.helpers[ctx:get():GetAddress()];if r then out:set(FText(r.closed and'Pick up laptop'or'Screen: use computer / Lid: pick up'))end end)}
-  L.hooks[5]={RegisterHook(base..'GetName',function(ctx,out)if L.helpers[ctx:get():GetAddress()]then out:set(FText('Beyond Tuning Laptop'))end end)}
+  L.hooks[4]={RegisterHook(base..'GetPrimaryActionName',function(ctx,out)local r=L.helpers[ctx:get():GetAddress()];if r then out:set(FText(r.closed and takeName(r)or('Screen: use computer / Lid: '..takeName(r))))end end)}
+  L.hooks[5]={RegisterHook(base..'GetName',function(ctx,out)if L.helpers[ctx:get():GetAddress()]then out:set(FText('Tuner Laptop'))end end)}
   L.hooks[6]={RegisterHook(base..'SaveObject',function(ctx,out)
    local a=ctx:get();if L.transient[a:GetAddress()]==a:GetFullName()then local values=out:get();values:Empty()end
   end)}
-  local function interaction(ctx,pressed,pc)
+  local function interaction(ctx,pressed,pc,primary)
    local a=ctx:get();local id=valid(a)and marker(a);if not id or not L.items[id]then return end;local caller=pc:get()
+   local r=L.items[id];local remove=primary and pressed:get()and r.closed and L.attached(r)
    T.enqueue(function()
-    if not valid(a)then return end;local held={};if valid(caller)then caller:GetItemInHand(held)end
+    if not valid(a)then return end
+    if remove and valid(caller)then
+     if a:HasAuthority()then L.request(caller,{id=id,action='pickup'})elseif same(caller,V.pc())then L.pickup(r)end
+    end
+    local held={};if valid(caller)then caller:GetItemInHand(held)end
     local inHand=same(held.Item,a);if valid(a.AttachableComponent)then a.AttachableComponent:SetComponentTickEnabled(inHand)end
     if valid(a:GetAttachParentActor())and not inHand then a:SetActorTickEnabled(false)end
    end)
   end
   local attach='/Game/BP/Items/Master/AttachableMaster.AttachableMaster_C:'
-  L.hooks[7]={RegisterHook(attach..'ExecutePrimaryAction',interaction)}
-  L.hooks[8]={RegisterHook(attach..'ExecuteSecondaryAction',interaction)}
+  L.hooks[7]={RegisterHook(attach..'ExecutePrimaryAction',function(ctx,pressed,pc)interaction(ctx,pressed,pc,true)end)}
+  L.hooks[8]={RegisterHook(attach..'ExecuteSecondaryAction',function(ctx,pressed,pc)interaction(ctx,pressed,pc,false)end)}
   L.hooks[9]={RegisterHook('/Game/BP/Components/AttachActorOn.AttachActorOn_C:OnRep_ActorsAttached',function()
    for _,r in pairs(L.items)do if valid(r.actor)and valid(r.actor:GetAttachParentActor())then
     r.actor:SetActorTickEnabled(false);if valid(r.actor.AttachableComponent)then r.actor.AttachableComponent:SetComponentTickEnabled(false)end
@@ -237,6 +281,31 @@ return function(T)
   end)}
   L.hooks[11]={RegisterHook(base..'GetSecondaryActionName',function(ctx,out)
    local r=L.helpers[ctx:get():GetAddress()];if r then out:set(FText(r.closed and'Open lid'or'Close lid'))end
+  end)}
+  L.hooks[12]={RegisterHook(attach..'ForcePrimaryAction',function(ctx,pc,out)
+   local r=L.actors[ctx:get():GetAddress()];if r and r.closed then out:set(true)end
+  end)}
+  L.hooks[13]={RegisterHook(attach..'GetPrimaryActionName',function(ctx,out)
+   local r=L.actors[ctx:get():GetAddress()];if r and r.closed then out:set(FText(takeName(r)))end
+  end)}
+  L.hooks[14]={RegisterHook('/Game/BP/Items/Master/ItemBaseMaster.ItemBaseMaster_C:GetName',function(ctx,out)
+   local a=ctx:get();if L.actors[a:GetAddress()]or(a:GetFullName():match('^AttachableMaster_C ')and L.data[actorId(a)])then out:set(FText('Tuner Laptop'))end
+  end)}
+  local restore='/Game/BP/Components/BP_InventoryComponent.BP_InventoryComponent_C:GetItemFromSlot'
+  L.hooks[15]={RegisterHook(restore,function(ctx,slot,force,position,remove,defer,item)
+   local a=item:get();if defer:get()or not valid(a)then return end
+   local id=actorId(a);if L.data[id]then L.skin(a,id)end
+  end)}
+  -- Stored items are destroyed by native inventory. Retire the separate local
+  -- hit targets at EndPlay, without polling world items or leaving a ghost lid.
+  L.hooks[16]={RegisterHook('/Game/BP/Items/Master/ItemBaseMaster.ItemBaseMaster_C:ReceiveEndPlay',function(ctx)
+   local addr=ctx:get():GetAddress();local r=L.actors[addr];if not r then return end
+   L.actors[addr]=nil
+   if L.colliders then L.colliders[r.colliderAddress]=nil end
+   if L.items[r.id]==r then L.items[r.id]=nil end
+   if valid(r.proxy)and r.proxy:HasAuthority()then r.proxy:K2_DestroyActor();r.proxy=nil end
+   if valid(r.helper)then local h=r.helper:GetAddress();L.helpers[h]=nil;L.transient[h]=nil;r.helper:K2_DestroyActor()end
+   if L.active==r then T.enqueue(function()if L.active==r then L.close()end end)end
   end)}
   NotifyOnNewObject(carrierPath,function()L.dirty=true end)
  end
@@ -262,7 +331,7 @@ return function(T)
   end
   if L.active and not L.openPending then
    local p=V.player();local e=valid(p)and p.AC_EbaySystem;local hud=valid(e)and e.HUDREF
-   if valid(hud)and hud:IsInViewport()then L.active.hadDesktop=true elseif L.active.hadDesktop then L.close()end
+   if not valid(L.active.actor)or not valid(L.active.proxy)then L.close()elseif valid(hud)and hud:IsInViewport()then L.active.hadDesktop=true elseif L.active.hadDesktop then L.close()end
   end
   if L.waiting then
    local w=L.waiting
@@ -273,10 +342,11 @@ return function(T)
    end
   end
   if L.capture then
+   local ok,e=pcall(function()
    local c=L.capture;c.frames=c.frames+1
    if c.flat and c.frames>=c.copyFrame+1 then
     StaticFindObject('/Script/Engine.Default__KismetRenderingLibrary'):ExportRenderTarget(c.r.actor,c.flat,T.root..'/state','laptop-'..c.r.id..'.png')
-    c.component:SetComponentTickEnabled(false);c.component:SetWidget(nil);c.component:K2_DestroyComponent(c.r.actor);L.capture=nil;return
+    L.cancelCapture();return
    end
    if c.frames>=2 then
     local rt=c.component:GetRenderTarget()
@@ -288,14 +358,17 @@ return function(T)
      end)
      c.r.screenMaterial:SetTextureParameterValue(FName('SlateUI'),c.flat);c.copyFrame=c.frames;return
     end
-    c.component:SetComponentTickEnabled(false);c.component:SetWidget(nil);c.component:K2_DestroyComponent(c.r.actor);L.capture=nil
+    L.cancelCapture()
    end
+   end)
+   if not ok then L.cancelCapture();print('[Beyond Tuning] Screen snapshot skipped: '..tostring(e)..'\n')end
   end
  end
  function L.reset()
   if L.active then pcall(L.close)end
+  L.cancelCapture()
   for _,r in pairs(L.items)do if valid(r.helper)then r.helper:K2_DestroyActor()end;visual.destroy(r)end
-  L.items={};L.data={};L.helpers={};L.colliders={};L.transient={};L.world=nil;L.active=nil;L.capture=nil;L.dirty=true
+  L.items={};L.actors={};L.data={};L.helpers={};L.colliders={};L.transient={};L.world=nil;L.active=nil;L.capture=nil;L.dirty=true
  end
  return L
 end

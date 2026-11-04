@@ -1,5 +1,9 @@
 # Validation
 
+## Version 1.1.2 laptop fixes
+
+In a disposable solo world, a real car's attachment list lost the mounted laptop after native Remove from either the closed lid or the body. A loose laptop was taken into hands. Beyond Apocalypse's actual backpack transfer code stored it, returned its Tuner Laptop name and texture, retrieved it into hands, and restored its closed lid and usable desktop. Forcing the screen snapshot to throw during exit still removed the fullscreen HUD and restored mouse, look and movement input. These checks did not use a second networked PC.
+
 ## Version 1.1.1 controls
 
 Focused callback checks cover closed-lid left-click pickup, right-click open/close, ignored button-release events, open-screen access, forwarding pickup to the native physical body, and closed-lid rejection at both local and host entry points. The idle-update and existing policy checks pass. This patch did not rerun the full native-world suite below.

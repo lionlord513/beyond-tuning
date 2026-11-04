@@ -1,10 +1,10 @@
 {
   "Id": "beyondtuning",
   "Name": "Beyond Tuning",
-  "Version": "1.1.1",
+  "Version": "1.1.2",
   "Channel": "stable",
   "Description": "Car Tuning with engine-specific Drift/Race examples, multiplayer calibration and live telemetry, a folding portable laptop, persistent tunes and optional BA nitrous.",
-  "Changelog": "Right-click the laptop lid to open/close; left-click the closed laptop to pick it up. Closed laptops cannot open the computer, including multiplayer requests. Idle performance unchanged.",
+  "Changelog": "Closed laptops use native Remove on a mount and Take on the ground. Beyond Apocalypse backpacks show Tuner Laptop with a dedicated icon. Exiting fullscreen restores controls even if the screen snapshot fails.",
   "Dependencies": [
     "UE4SS"
   ],

@@ -1,5 +1,5 @@
 local root=debug.getinfo(1,'S').source:sub(2):gsub('\\','/'):match('^(.*)/Scripts/[^/]+$')
-local T={version='1.1.1',root=assert(root),queue={},message='Sit in a car, then open Car Tuning on a computer.',active=true}
+local T={version='1.1.2',root=assert(root),queue={},message='Sit in a car, then open Car Tuning on a computer.',active=true}
 function T.valid(o)return o and o:IsValid()end
 function T.status(s)local text=tostring(s);print('[Beyond Tuning] '..text..'\n');T.message=text:gsub('^.-:%d+: ',''):match('[^\r\n]+'):sub(1,165);if T.ui then T.ui.refreshStatus=true end end
 function T.enqueue(fn)T.queue[#T.queue+1]=fn end
@@ -12,6 +12,9 @@ T.draw=dofile(root..'/Scripts/draw.lua')(T)
 T.ui=dofile(root..'/Scripts/ui.lua')(T)
 T.network=dofile(root..'/Scripts/network.lua')(T)
 T.laptop=dofile(root..'/Scripts/laptop.lua')(T)
+do local ok,changed=pcall(dofile(root..'/Scripts/backpack_compat.lua'),root)
+ if not ok then T.status('Backpack adapter: '..tostring(changed))elseif changed then T.status('Backpack name/icon adapter installed. Restart the game once to activate it.')end
+end
 local errors={};local tick=0
 T.timer=LoopInGameThreadWithDelay(50,function()
  if not T.active then return end
@@ -26,7 +29,7 @@ T.timer=LoopInGameThreadWithDelay(50,function()
  if not ok and not errors[tostring(e)]then errors[tostring(e)]=true;T.status(e)end
 end)
 RegisterLoadMapPreHook(function()T.resetRequested=true end)
-RegisterKeyBind(Key.ESCAPE,function()if T.laptop.active then T.enqueue(T.laptop.close)elseif T.ui.opened then T.enqueue(T.ui.close)end end)
+RegisterKeyBind(Key.ESCAPE,function()ExecuteInGameThread(function()if T.laptop.active then T.laptop.close()elseif T.ui.opened then T.ui.close()end end)end)
 _G.BeyondTuning=T
 T.status('Beyond Tuning '..T.version..' loaded. Car Tuning is available on in-game computers.')
 return T

@@ -60,7 +60,7 @@ return function(T)
    {'03  Apply and test','Apply works from the driver seat, even while moving. Changes and a reusable preset are saved immediately.','Compare on the same road. Race uses maximum output: watch heat, fuel and traction. Save to keep the car itself.'},
    {'04  Fine-tune the table','Click a cell, then use -5 / +5. Rows are pedal position; columns are RPM across your engine redline.','100 is stock. 110 adds 10% torque in that region. Values blend smoothly between neighboring cells.'},
    {'05  Import, export and share','File > Import opens a drop window. Drag one preset JSON onto it, or click Browse. Review, then Apply.','File > Export opens Save As. File > Save preset stores a reusable copy; Preset folder opens it in Explorer.'},
-   {'06  Use your portable computer','File > Laptop buys the laptop for $250. Right-click its lid to open/close; left-click the open screen to use it.','Left-click the closed laptop to pick it up. Use normal attachment controls to mount its bottom in a car.'},
+   {'06  Use your portable computer','File > Laptop: $250. Right-click the lid to fold; left-click the open screen to use. Esc exits.','Closed: left-click to Remove from a mount or Take from the ground. In a BA backpack, drag Hands to a slot.'},
   }
   for i,row in ipairs(lines)do local y=166+(i-1)*98;label(p,row[1],42,y,1300,28,19,U.accent);label(p,row[2],42,y+31,1300,24,16);label(p,row[3],42,y+55,1300,24,16,U.muted)end
   label(p,'Multiplayer: everyone needs this mod. Host saves tunes; the driver supplies live telemetry. Esc freezes the laptop screen.',42,778,1300,26,15,U.muted)

@@ -2,7 +2,7 @@
 
 **Car Tuning** brings a desktop-style calibration workspace to the computers in **Drive Beyond Horizons**. Seven live gauges, a torque correction table, a live trace and a rotatable 3D hologram of the installed engine sit inside a native in-game window.
 
-Built using the computer-window and input-surface approach established by Beyond Apocalypse's Hangar app. Beyond Tuning is a separate mod and does not replace Beyond Apocalypse files.
+Built using the native computer-window approach established by Beyond Apocalypse's Hangar app. Beyond Tuning works on its own. With Beyond Apocalypse installed, Tuning adds a small optional loader to its Lua entry point for backpack names and icons. An original backup is kept in Tuning's state folder. On first install, or after a BA update replaces that entry point, restart the game once after the loader is added.
 
 ![Car Tuning with the rotatable installed-engine view](docs/screenshots/engine-view.png)
 
@@ -10,7 +10,7 @@ Built using the computer-window and input-surface approach established by Beyond
 
 Windows x64, Drive Beyond Horizons build 26106988, and a compatible UE4SS installation are required. Developed alongside Beyond Apocalypse 1.0.10. Beyond Apocalypse is optional; when installed, Beyond Mod Manager loads it first.
 
-**Beyond Mod Manager:** import `BeyondTuning-1.1.1-Nexus.zip`, inspect the preview, and install. The manifest supplies identity, version, load order, GitHub updates and preservation rules for your presets and settings.
+**Beyond Mod Manager:** import `BeyondTuning-1.1.2-Nexus.zip`, inspect the preview, and install. The manifest supplies identity, version, load order, GitHub updates and preservation rules for your presets and settings.
 
 **Manual:** exit the game and extract the ZIP into the main `Drive Beyond Horizons` game folder. The resulting path is `DriveBeyondHorizons/Binaries/Win64/ue4ss/Mods/BeyondTuning/Scripts/main.lua`. The included `enabled.txt` enables the mod. This package does not include or replace UE4SS.
 
@@ -59,7 +59,8 @@ Open **Car Tuning > File > Laptop / Buy for $250**. The laptop is delivered besi
 
 - **Left-click the open screen** to open the native desktop, including other installed computer apps. A closed laptop cannot open the desktop.
 - **Right-click the bezel/lid** to open or close it.
-- **Left-click the closed laptop** to pick it up. Left-clicking the open lid/bezel also picks up the body.
+- **Left-click the closed laptop** to use **Remove** while mounted or **Take** while loose. If Remove leaves it on the ground, click again to take it.
+- **Beyond Apocalypse backpack:** take the laptop, open the backpack with **Tab**, and drag **Hands** into an empty cell. Drag **Tuner Laptop** back to Hands to retrieve it. Its icon and lid state travel with it.
 - Pick up the base and use the game's normal attachment controls to mount the bottom on a vehicle or other object.
 - A mounted laptop can be used from the driver seat. **Esc** or **Return to laptop** exits the desktop and freezes its last image. Clicking the screen resumes the workspace.
 - Save your game to retain the physical laptop and its attachment. Its lid state and frozen display are stored in the mod's preserved state folder.
