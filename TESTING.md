@@ -20,7 +20,7 @@ On build 26106988, the Boost purchase button delivered a full Stage II 10 L bott
 
 A disposable copy of a player's autosave loaded the same world and vehicles. A newly delivered laptop was mounted there. Nine traces across its folded surface selected the laptop, including the corners. The native Remove action released it. After Take, the visible native mesh stayed about one metre from the camera and appeared in a capture from the player's viewpoint. Dropping it restored world interaction and its open prompt read Use laptop.
 
-With Beyond Apocalypse absent, buying a Stage I five-litre bottle in that world produced a textured bottle holding five litres of native nitrous. The policy checks cover all six variants, 25–200% injection, partial bottles, safety cutoffs, and immutable save revisions. Separate-PC multiplayer was not exercised for this release.
+With Beyond Apocalypse absent, buying a Stage I five-litre bottle in that world produced a textured bottle holding five litres of native nitrous. The policy checks cover all six variants, 25â€“200% injection, partial bottles, safety cutoffs, and immutable save revisions. Separate-PC multiplayer was not exercised for this release.
 
 ## Version 1.1.2 laptop fixes
 
@@ -61,7 +61,7 @@ Build `tests/native.c` with Zig's Windows x64 C compiler, `-municode`, and the s
 ## In-game checks
 
 - Fourteen native integration assertions cover output, pedal/map multiplication, native gear speed and torque values, shift duration, free-rev ceiling, fuel/heat costs, real torque cutoff, stock restoration, stock nitrous behavior, real fluid telemetry, saved preset reload and validated/rejected imports.
-- The native wheel torque path produced **23.831058 → 29.788822**, exactly **+25%**, after applying 125% output. This exercises `UpdateWheelTorque`, beyond checking a preview graph.
+- The native wheel torque path produced **23.831058 â†’ 29.788822**, exactly **+25%**, after applying 125% output. This exercises `UpdateWheelTorque`, beyond checking a preview graph.
 - Native widget callback checks cover the table editor, reset, File, Vehicle, Settings, Help, Classic/Dark and speed units. Screenshots verify native window layout and text.
 - All 21 engine catalog classes rendered at top and angled views (42 captures). Pixel checks confirm transparent backgrounds, visible contours and distinct camera orientations. The native image owns the texture; rendering survives forced Unreal garbage collection.
 - Two fitted turbos produced independently adjusted native torque contributions at 50% and 175%; shared curve assets remained unchanged and stock restoration returned both originals. Applied turbo settings persisted.
@@ -76,3 +76,7 @@ Build `tests/native.c` with Zig's Windows x64 C compiler, `-municode`, and the s
 The 1.0 checks below predate client tuning support. A separate multiplayer host/client session and every possible vehicle/mod combination have not been tested. Other mods which replace the same torque or gear values can conflict. Future game or loader updates may require adapter changes. Draft edits are temporary until Apply or Save preset; restoring stock intentionally resets the active calibration.
 
 The engine preview uses GPU scene capture and runtime contour conversion. It does not read unavailable CPU mesh buffers. Gear updates edit existing native entries rather than marshal replacement gear arrays through the loader.
+
+## Version 1.2.5
+
+Tested in the running game process on build 26437602 with Beyond Apocalypse 1.1.3. The test autosave was restored after death from thirst. Native cassette pickup/remote-style empty hand cache/insertion/removal and native wallet debit/save/refund passed. Separate protocol fixtures tested independent client funds, an empty host wallet, insufficient funds, duplicate requests, recovery after a lost reply, owner validation, and refund replay. A second Steam player was unavailable for the final co-op retest. Remote empty-hand fallback averaged 2.48 ms across 25 action checks with 50 item actors and is not in a frame loop.

@@ -1,3 +1,9 @@
+# Beyond Tuning 1.2.5
+
+Fixed multiplayer laptop purchases using the host wallet. Each buyer now pays from their own wallet.
+Added saved order receipts, retry protection and refunds when delivery fails.
+Host and clients must update to 1.2.5 or newer for laptop purchases.
+
 # Beyond Tuning 1.2.4
 
 Fixed a multiplayer message handling issue that could cause crashes when joining.

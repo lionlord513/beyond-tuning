@@ -137,7 +137,7 @@ return function(T)
   if S.read(path,4*1024*1024)then local tex=StaticFindObject('/Script/Engine.Default__KismetRenderingLibrary'):ImportFileAsTexture2D(a,path);if valid(tex)then r.screenMaterial:SetTextureParameterValue(FName('SlateUI'),tex)end end
   return r
  end
- function L.spawn(pc,at,site)
+ function L.spawn(pc,at,site,orderId)
   assert(valid(pc)and pc:HasAuthority(),'Host unavailable')
   assert(S.world,'Save your world before ordering a laptop')
   local p=pc.PlayerControlled;assert(valid(p),'Player unavailable')
@@ -149,6 +149,10 @@ return function(T)
    configureCarrier(a)
    T.delivery.place(a,a.RootMeshComponent,at)
    -- BeginPlay assigns the final persistent GUID.
+   if orderId then
+    assert(type(orderId)=='string'and #orderId==32 and orderId:match('^%x+$'),'Invalid laptop order identity')
+    local g={};for i,k in ipairs({'A','B','C','D'})do local n=tonumber(orderId:sub(i*8-7,i*8),16);g[k]=n>=0x80000000 and n-0x100000000 or n end;a.GuidUnique=g
+   end
    final=actorId(a);mark(a,final)
    L.data[final]={closed=site~=nil};L.skin(a,final);if site then L.lootSites[site]=final end;L.persist();broadcast(final)
    a:FlushNetDormancy();a:ForceNetUpdate()
@@ -183,10 +187,11 @@ return function(T)
   if not sys:BoxTraceSingle(p,spot,{X=spot.X,Y=spot.Y,Z=spot.Z+1},{X=23,Y=24,Z=8},{Pitch=0,Yaw=0,Roll=0},0,false,{p},0,{},true,col,col,0)then L.spawn(pc,spot,site)end
  end
  function L.buy(pc)
+  assert(pc:IsLocalPlayerController(),'Update Beyond Tuning to 1.2.5 or newer on both PCs to purchase with your own money')
   return T.delivery.purchase(pc,L.price,function(at)return L.spawn(pc,at)end)
  end
  function L.order()
-  local pc=V.pc();if pc:HasAuthority()then T.ui.orderStatus(L.buy(pc))else assert(N.connected,'Host needs Beyond Tuning');assert(not L.orderPending,'Order pending');L.orderPending=true;N.call({op='laptop',action='buy'})end
+  local pc=V.pc();if pc:HasAuthority()then T.ui.orderStatus(L.buy(pc))else L.shop.order()end
  end
  function L.disconnect(pc)
   local address=pc:GetAddress()
@@ -440,6 +445,7 @@ return function(T)
   NotifyOnNewObject(carrierPath,discover);NotifyOnNewObject(donorPath,discover)
  end
  function L.tick()
+  L.shop.tick()
   if not S.ready or not S.world then return end;L.install()
   if L.world~=S.world then
    L.world=S.world;local saved=S.recover(T.root..'/state/laptops-'..S.world..'.json',J.decode,1024*1024)
@@ -500,5 +506,6 @@ return function(T)
   for _,r in pairs(L.items)do if valid(r.helper)then r.helper:K2_DestroyActor()end;visual.destroy(r)end
   L.items={};L.actors={};L.data={};L.helpers={};L.colliders={};L.transient={};L.world=nil;L.lootSites=nil;L.orderPending=nil;L.active=nil;L.capture=nil;L.dirty=true
  end
+ L.shop=dofile(T.root..'/Scripts/laptop_shop.lua')(T,L)
  return L
 end

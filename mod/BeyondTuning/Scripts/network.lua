@@ -65,7 +65,7 @@ return function(T)
   assert(valid(pc)and pc:HasAuthority(),'Invalid host endpoint')
   local address=pc:GetAddress();local peer=N.peers[address]or {pc=pc};N.peers[address]=peer;peer.seen=now()
   if p.op=='hello'then
-   N.send(pc,{op='ready',world=S.world,version=T.version})
+   N.send(pc,{op='ready',world=S.world,version=T.version,laptopShop=2})
    for id,saved in pairs(S.records)do local a=find(id);local r=valid(a)and V.ensure(a);if r then N.send(pc,N.record(r))else N.send(pc,{op='record',id=id,tune=saved.tune,base=saved.base,world=S.world,revision=0})end end
    if T.laptop then T.laptop.sync(pc)end
   elseif p.op=='ping'then return
@@ -89,6 +89,7 @@ return function(T)
    local service=T.induction.nitrous
    assert(service.buy,'Update Beyond Apocalypse to order here')
    N.send(pc,{op='delivery',message=service.buy(pc,p.variant)})
+  elseif p.op=='laptopOrder'then assert(T.laptop,'Laptop unavailable');T.laptop.shop.server(pc,p)
   elseif p.op=='laptop'then assert(T.laptop,'Laptop unavailable');T.laptop.request(pc,p)
   else error('Unknown tuning message')end
  end
@@ -100,7 +101,7 @@ return function(T)
  function N.receiveClient(p)
   if p.op=='ready'then
    if not host()then for _,r in pairs(V.records)do V.restore(r)end;S.records={}end
-   N.connected=true;N.helloAt=now()+30;N.world=p.world;S.world=p.world
+   N.connected=true;N.helloAt=now()+30;N.world=p.world;S.world=p.world;N.laptopShop=p.laptopShop
   elseif p.op=='record'then refreshRecord(p)
   elseif p.op=='delivery'then T.delivery.pending=nil;T.delivery.note(p.message)
   elseif p.op=='error'then
@@ -112,6 +113,7 @@ return function(T)
    assert(type(p.force)=='number'and p.force>=0 and p.force<1e9 and type(p.base)=='number'and p.base>=0 and p.base<1e9,'Invalid boost force')
    local a=find(p.id);if valid(a)then T.induction.nitrous.remote={actor=a,force=p.force,base=p.base,untilTime=now()+.4}end
   elseif p.op=='laptops'and T.laptop then T.laptop.receive(p)
+  elseif p.op=='laptopPayment'then T.laptop.shop.client(p)
   elseif p.op=='laptopReceipt'then T.laptop.orderPending=nil;T.ui.orderStatus(p.message)
   elseif p.op=='notice'then T.status(p.message)
   elseif p.op=='laptopOpened'and T.laptop then T.laptop.waiting={id=p.id,untilTime=now()+8}
@@ -177,6 +179,6 @@ return function(T)
    end end
   end
  end
- function N.reset()N.peers={};N.remote={};N.revision={};N.identities={};N.cars={};N.connected=false;N.helloAt=0;N.watchAt=0;N.stream=nil;N.pending=nil end
+ function N.reset()N.peers={};N.remote={};N.revision={};N.identities={};N.cars={};N.connected=false;N.laptopShop=nil;N.helloAt=0;N.watchAt=0;N.stream=nil;N.pending=nil end
  return N
 end

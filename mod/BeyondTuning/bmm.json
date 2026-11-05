@@ -1,10 +1,10 @@
 {
   "Id": "beyondtuning",
   "Name": "Beyond Tuning",
-  "Version": "1.2.4",
+  "Version": "1.2.5",
   "Channel": "stable",
   "Description": "Tune your car, fit nitrous and take a laptop on the road.",
-  "Changelog": "Fixed a multiplayer message handling issue that could cause crashes when joining.\nFixed host actions being triggered by replies meant for other players.",
+  "Changelog": "Fixed multiplayer laptop purchases using the host wallet. Each buyer now pays from their own wallet.\nAdded saved order receipts, retry protection and refunds when delivery fails.\nHost and clients must update to 1.2.5 or newer for laptop purchases.",
   "Dependencies": [
     "UE4SS"
   ],
