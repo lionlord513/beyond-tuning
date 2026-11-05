@@ -110,7 +110,8 @@ return function(T,L)
   elseif p.state=='cancelled'and r.state=='quote'then r.state='cancelled';save();finish(p.message or'Laptop order cancelled')end
  end
  function P.tick()
-  local pc=V.pc();if not valid(pc)or pc:HasAuthority()or not N.connected or N.laptopShop~=2 or not S.world then return end
+  if not N.connected or N.laptopShop~=2 or not S.world then return end
+  local pc=V.pc();if not valid(pc)or pc:HasAuthority()then return end
   if not P.loaded then P.pending=read(clientPath);P.loaded=true end
   local r=P.pending;if not r or terminal(r)or r.world~=S.world or clock()<(P.retryAt or 0)then return end
   L.orderPending=true;P.retryAt=clock()+3

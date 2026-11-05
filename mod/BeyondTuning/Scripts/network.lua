@@ -42,10 +42,23 @@ return function(T)
   local m=V.motor(a);if not valid(m)then return end;local id=V.id(a,m)
   for _,peer in pairs(N.peers)do local car=valid(peer.pc)and(valid(peer.pc.Vehicle)and peer.pc.Vehicle or peer.driven);if valid(car)and car:GetAddress()==a:GetAddress()then N.send(peer.pc,{op='nitrousForce',id=id,force=force,base=base})end end
  end
+ local function applied(p,tune,current)
+  if N.pending and p.id==N.pending.id and p.request==N.pending.serial then
+   T.draft=P.copy(current);T.dirty=false;N.pending=nil
+   S.savePreset(tune,T.presetName or'Last multiplayer tune');T.status('Tune applied')
+  end
+ end
  local function refreshRecord(p)
+  if not N.world or p.world~=N.world then return end
   assert(type(p.id)=='string'and #p.id==65,'Invalid network identity')
-  local tune=P.validate(p.tune);local base=P.baseline(p.base)
-  N.revision[p.id]=p.revision or 0
+  local revision=p.revision or 0
+  local tune=P.validate(p.tune)
+  if N.revision[p.id]and revision<N.revision[p.id]then
+   if S.records[p.id]then applied(p,tune,S.records[p.id].tune)end
+   return
+  end
+  local base=P.baseline(p.base)
+  N.revision[p.id]=revision
   S.world=p.world;S.ready=true;S.error=nil;S.records[p.id]={tune=tune,base=base}
   local a=find(p.id)
   if valid(a)then
@@ -55,17 +68,17 @@ return function(T)
   end
   -- A client keeps a recovery cache; the host remains the save authority.
   if S.world then S.persist()end
-  if N.pending and p.request==N.pending.serial then
-   T.draft=P.copy(tune);T.dirty=false;N.pending=nil
-   S.savePreset(tune,T.presetName or'Last multiplayer tune');T.status('Tune applied')
-  end
+  applied(p,tune,tune)
   if T.ui then T.ui.refresh=true end
  end
  function N.receiveServer(pc,p)
   assert(valid(pc)and pc:HasAuthority(),'Invalid host endpoint')
-  local address=pc:GetAddress();local peer=N.peers[address]or {pc=pc};N.peers[address]=peer;peer.seen=now()
-  if p.op=='hello'then
-   N.send(pc,{op='ready',world=S.world,version=T.version,laptopShop=2})
+  local address=pc:GetAddress();local peer=N.peers[address];local name=pc:GetFullName()
+  if not peer or peer.name~=name then peer={pc=pc,name=name};N.peers[address]=peer end
+  peer.seen=now()
+  if p.op=='hello'or (p.op=='ping'and peer.world~=S.world)then
+   if not S.world then return end
+   peer.world=S.world;N.send(pc,{op='ready',world=S.world,version=T.version,laptopShop=2})
    for id,saved in pairs(S.records)do local a=find(id);local r=valid(a)and V.ensure(a);if r then N.send(pc,N.record(r))else N.send(pc,{op='record',id=id,tune=saved.tune,base=saved.base,world=S.world,revision=0})end end
    if T.laptop then T.laptop.sync(pc)end
   elseif p.op=='ping'then return
@@ -90,6 +103,7 @@ return function(T)
    assert(service.buy,'Update Beyond Apocalypse to order here')
    N.send(pc,{op='delivery',message=service.buy(pc,p.variant)})
   elseif p.op=='laptopOrder'then assert(T.laptop,'Laptop unavailable');T.laptop.shop.server(pc,p)
+  elseif p.op=='laptopPose'then T.laptop.mount.receive(pc,p)
   elseif p.op=='laptop'then assert(T.laptop,'Laptop unavailable');T.laptop.request(pc,p)
   else error('Unknown tuning message')end
  end
@@ -100,8 +114,11 @@ return function(T)
  end
  function N.receiveClient(p)
   if p.op=='ready'then
-   if not host()then for _,r in pairs(V.records)do V.restore(r)end;S.records={}end
-   N.connected=true;N.helloAt=now()+30;N.world=p.world;S.world=p.world;N.laptopShop=p.laptopShop
+   if not host()and p.world~=N.world then
+    for _,r in pairs(V.records)do V.restore(r)end
+    S.records={};N.revision={};N.pending=nil
+   end
+   N.connected=true;N.helloAt=now()+30;N.world=p.world;S.world=p.world;S.ready=S.world~=nil;N.laptopShop=p.laptopShop
   elseif p.op=='record'then refreshRecord(p)
   elseif p.op=='delivery'then T.delivery.pending=nil;T.delivery.note(p.message)
   elseif p.op=='error'then
@@ -122,7 +139,7 @@ return function(T)
  function N.request(tune)
   assert(N.connected,'The host needs Beyond Tuning 1.1 or newer. Waiting for its response.')
   local r=assert(V.current,'Sit in a car with an engine first');assert(r.id,'The car needs a persistent identity')
-  N.serial=N.serial+1;N.pending={serial=N.serial,at=now()}
+  N.serial=N.serial+1;N.pending={serial=N.serial,id=r.id,at=now()}
   N.call({op='apply',id=r.id,tune=P.validate(tune),request=N.serial});T.status('Applying tune…')
  end
  function N.telemetry(id)
@@ -179,6 +196,6 @@ return function(T)
    end end
   end
  end
- function N.reset()N.peers={};N.remote={};N.revision={};N.identities={};N.cars={};N.connected=false;N.laptopShop=nil;N.helloAt=0;N.watchAt=0;N.stream=nil;N.pending=nil end
+ function N.reset()N.peers={};N.remote={};N.revision={};N.identities={};N.cars={};N.connected=false;N.laptopShop=nil;N.helloAt=0;N.watchAt=0;N.relayAt=0;N.sendAt=0;N.watching=nil;N.world=nil;N.stream=nil;N.pending=nil end
  return N
 end

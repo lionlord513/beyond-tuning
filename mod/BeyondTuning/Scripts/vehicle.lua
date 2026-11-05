@@ -9,9 +9,15 @@ return function(T)
  end
  local names={'Dada','Musgoat','Poyopa','Trailer','Kart','TriClops','Bonphiac','IFA','C18','UAZ','GTR','Golf','Toilet','Tractor','German Compact','French Utility','Muscle Car','Japanese Sport','Peak','Speedle','Escada','Escada Ladder','Kaiju G54','Bingo','SuperCube','Remorque 2000','Barrel Car','Hoist Car','Rotor GT7'}
  local function same(a,b)if not valid(a)or not valid(b)then return not valid(a)and not valid(b)end;return a:GetAddress()==b:GetAddress()end
+ local viewportEngine
  function V.pc()
-  if valid(V.controller)and V.controller:IsLocalPlayerController()then return V.controller end
-  for _,c in ipairs(FindAllOf('PlayerController')or{})do if valid(c)and c:IsLocalPlayerController()then V.controller=c;return c end end
+  if not valid(viewportEngine)then viewportEngine=FindFirstOf('GameEngine')end
+  local viewport=valid(viewportEngine)and viewportEngine.GameViewport
+  if not valid(viewport)then return end
+  local world=viewport:GetWorld()
+  if not valid(world)then return end
+  local pc=game:GetPlayerController(world,0)
+  if valid(pc)and pc:IsLocalPlayerController()then return pc end
  end
  function V.player()local pc=V.pc();return valid(pc)and pc.PlayerControlled end
  function V.motor(a)local slot=valid(a)and a.CarMotorV2;return valid(slot)and slot.AttachedCarEquipableActor end
@@ -125,7 +131,7 @@ return function(T)
  end
  function V.tick()
   local pc=V.pc();local p=valid(pc)and pc.PlayerControlled;if not valid(p)or not p.IsLoaded then return end
-  local gi=game:GetGameInstance(p);if valid(gi.MainSaveGame)then S.load(gi.MainSaveGame)elseif not S.ready then S.ready=true;S.records={}end
+  local gi=game:GetGameInstance(p);if pc:HasAuthority()and valid(gi)and valid(gi.MainSaveGame)then S.load(gi.MainSaveGame)end
   if valid(pc.Vehicle)then V.target(pc.Vehicle)end
   if T.ui and T.ui.opened then V.sample()end
   local now=game:GetTimeSeconds(p)

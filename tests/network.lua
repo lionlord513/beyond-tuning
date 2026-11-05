@@ -24,4 +24,21 @@ client(ctx(localHost),text('BT1 {"op":"notice"}'));drain();assert(sent==1)
 local gone=pc(false,true);server(ctx(gone),text('BT1 {"op":"ping"}'));gone.alive=false;drain();assert(received==1000)
 server(ctx(remoteOwner),text('MTM1_other'));client(ctx(localHost),text('BAINV2R|other'));drain()
 assert(received==1000 and sent==1,'Another mod packet was intercepted')
+local testPc=pc(true,false);local saves,presets=0,0
+local function unchanged(v)return v end
+T.vehicle={pc=function()return testPc end,player=function()return nil end,records={}}
+T.storage={records={},persist=function()saves=saves+1 end,savePreset=function(t)assert(t==2);presets=presets+1 end}
+T.policy={validate=unchanged,baseline=unchanged,copy=unchanged};T.status=function()end
+FindAllOf=function()return {}end
+local U=dofile(root..'/network.lua')(T)
+local w=string.rep('a',32);local car=w..':'..w;local w2=string.rep('b',32)
+local function ready(id)U.receiveClient({op='ready',world=id})end
+local function record(world,num,request)
+ U.receiveClient({op='record',world=world,id=car,revision=num,tune=num,base=1,request=request})
+end
+ready(w);record(w,3);U.pending={id=car,serial=1};record(w,2,1)
+assert(T.storage.records[car].tune==3 and saves==1 and presets==1 and not U.pending and T.draft==3,'A late acknowledgement rolled back a newer tune')
+ready(w);assert(T.storage.records[car].tune==3,'Repeat hello deleted a current tune')
+ready(w2);record(w,9);assert(not T.storage.records[car]and saves==1,'A prior world overwrote the save after travel')
+record(w2,0);assert(T.storage.records[car].tune==0 and saves==2,'New world must accept its initial revision')
 print('RPC regression: read-only strings, correct recipient, disconnected controller and other-mod isolation passed')

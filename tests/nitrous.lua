@@ -22,6 +22,9 @@ StaticFindObject=function()return{}end
 local valid=function(x)return type(x)=='table'and x.valid~=false end
 local function read(path)local f=io.open(path,'rb');if not f then return end;local v=f:read('*a');f:close();return v end
 local T={root=scratch,valid=valid,storage={saveKey=function(save)return save.SaveGameMetadata.key,save.SaveGameMetadata.world end,read=read}}
+T.storage.recover=function(path,decode)local bytes=read(path)or read(path..'.bak');return bytes and decode(bytes)end
+T.storage.write=function(path,bytes)local f=assert(io.open(path,'wb'));assert(f:write(bytes));assert(f:close())end
+T.storage.activeSave=function(save)return save.active==true end
 local J=dofile(root..'/nitrous/journal.lua')(T,function()end)
 for _,ratio in ipairs({25,50,100,200}) do
  local fixture=state();fixture.injection=ratio;local force,used=P.output(fixture,.1)
@@ -32,6 +35,8 @@ local save={SaveGameMetadata={key='world-rev1',world='world'},IsA=function()retu
 J.load(nil);assert(not J.ready);J.load({SaveGameMetadata={world='world'}});J.state.bottle[guid]=6;J.state.site['Garage@1,2,3']=true;J.capture(save)
 J.state.bottle[guid]=1;assert(not pcall(J.capture,save),'A save revision was silently overwritten')
 J.reset();J.load(save);assert(J.state.bottle[guid]==6 and J.state.site['Garage@1,2,3'])
+save.active=true;save.SaveGameMetadata={world='new',key='new-'..string.rep('0',32)..'-1'}
+J.capture(save);J.state.bottle[guid]=2;J.capture(save);J.reset();J.load(save);assert(J.state.bottle[guid]==2)
 J.reset();J.load({SaveGameMetadata={key='world-old',world='world'}});assert(not next(J.state.bottle),'Older save inherited future variants')
 for _,bad in ipairs({'','BAN1\nbottle '..guid..' 7\n','BAN1\nbottle '..guid..' 1\nbottle '..guid..' 2\n','BAN1\nsite x\nsite x\n','BAN1\nunknown x\n','BAN1\nbottle invalid 2\n'})do assert(not pcall(J.decode,bad),'Malformed snapshot accepted')end
 print('PASS: boost safety gates, both tiers, speed/turn taper, frame-stall bounds, non-stacking capacity, immutable native save revisions, corrupt records rejected')

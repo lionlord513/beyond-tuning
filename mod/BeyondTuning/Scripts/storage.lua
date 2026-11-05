@@ -28,13 +28,12 @@ return function(root,J,P)
  function S.saveKey(save)
   local n=save.SaveGameMetadata.SaveName;local world=S.guid(n.Guid);local rev=S.guid(n.GuidUnique)
   if world==string.rep('0',32)then return end
-  if rev==string.rep('0',32)then return nil,world end
   return world..'-'..rev..'-'..tostring(n.Iterator),world
  end
  function S.load(save)
   if S.ready then return end;local key,world=S.saveKey(save)
-  S.ready=true;S.world=world;S.key=key;S.records={};S.error=nil
   if not world then return end
+  S.ready=true;S.world=world;S.key=key;S.records={};S.error=nil
   local function decode(text)local d=J.decode(text);assert(d.schema==1 and type(d.records)=='table','Invalid tuning journal');for id,r in pairs(d.records)do assert(id:match('^%x+:%x+$')and #id==65,'Invalid car / motor identity');r.tune=P.validate(r.tune);P.baseline(r.base)end;return d.records end
   local ok,v=pcall(function()
    local live=S.recover(root..'/state/active-'..world..'.json',decode,4*1024*1024);if live then return live end
@@ -46,8 +45,22 @@ return function(root,J,P)
   assert(S.ready and S.world and not S.error,S.error or'Waiting for world identity')
   S.write(root..'/state/active-'..S.world..'.json',J.encode({schema=1,records=S.records}))
  end
+local function activeSave(save)
+ local engine=FindFirstOf('GameEngine')
+ if not engine or not engine:IsValid()or not engine.GameViewport:IsValid()then return false end
+ local game=StaticFindObject('/Script/Engine.Default__GameplayStatics')
+ local pc=game:GetPlayerController(engine.GameViewport,0)
+ if not pc or not pc:IsValid()or not pc:HasAuthority()then return false end
+ local active=game:GetGameInstance(pc).MainSaveGame
+ if not active or not active:IsValid()then return false end
+ local a,b=active.SaveGameMetadata.SaveName.Guid,save.SaveGameMetadata.SaveName.Guid
+ return active:GetAddress()==save:GetAddress()or (a.A==b.A and a.B==b.B and a.C==b.C and a.D==b.D)
+end
+ S.activeSave=activeSave
  function S.capture(save)
-  if not S.ready or S.error then return end;local key,world=S.saveKey(save);if not key then return end;S.world=world;S.persist()
+  if not S.ready or S.error then return end;local key,world=S.saveKey(save);if not key or (S.world~=world and not activeSave(save))then return end
+  if S.world~=world and S.onWorldSave then S.onWorldSave(world)end
+  S.world=world;S.persist()
   local path=root..'/state/tunes-'..key..'.json';local bytes=J.encode({schema=1,records=S.records})
   local old=S.read(path,4*1024*1024)
   if old~=bytes then S.write(path,bytes)end;S.savedKey=key

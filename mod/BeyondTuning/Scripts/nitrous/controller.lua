@@ -145,6 +145,10 @@ return function(T,H,log)
    if not bottle(r.actor)or r.actor:GetFullName()~=key then N.items[key]=nil
    else
     local car=N.parent(r.actor)
+    if r.actor:HasAuthority()and T.laptop then
+     local parent=r.actor:GetAttachParentActor();local address=valid(parent)and parent:GetAddress()or nil
+     if address~=r.lastParent then r.lastParent=address;if address then T.laptop.mount.schedule(r)end end
+    end
     if valid(car)and not N.aircraft(car)then local c=record(car);c.items[#c.items+1]=r end
    end
   end
@@ -225,6 +229,10 @@ return function(T,H,log)
    end
    if N.effects then N.effects.update(r,r.active)end
   end
+  local pc=H.GetPlayerController();local localCar=valid(pc)and pc.Vehicle
+  local localRecord=valid(localCar)and N.cars[localCar:GetFullName()]
+  local data=localRecord and localRecord.capacity>0 and ('%s|%.3f|%g|%d|%d'):format(tostring(localCar:GetAddress()),localRecord.litres,localRecord.capacity,localRecord.tier,localRecord.active and 1 or 0)or ''
+  if data~=N.dashboardData then ModRef:SetSharedVariable('BT_DashboardNitrous',data);N.dashboardData=data end
   N.ambient(p,now)
  end
  function N.tick(p,now)
@@ -238,6 +246,7 @@ return function(T,H,log)
   end
  end
  function N.reset()
+  ModRef:SetSharedVariable('BT_DashboardNitrous','');N.dashboardData=nil
   for _,r in pairs(N.cars)do if live(r)then N.stop(r);N.effects.clear(r)end end
   N.items={};N.cars={};N.incoming={};N.requests={};aircraft={};N.seeded=nil;N.nextAt=0;N.visualAt=0;N.nextLoot=0;N.last=nil;N.errorUntil=nil;N.journal.reset();N.mounts.reset();N.visuals.reset();N.net.reset()
  end

@@ -2,6 +2,7 @@ return function(T)
  local L={items={},actors={},data={},helpers={},transient={},dirty=true,price=1000};local valid=T.valid
  local S,V,N,J=T.storage,T.vehicle,T.network,T.json
  local visual=dofile(T.root..'/Scripts/laptop_visual.lua')(T);L.visual=visual
+ L.mount=dofile(T.root..'/Scripts/item_mount.lua')(T,L)
  local game=StaticFindObject('/Script/Engine.Default__GameplayStatics')
  local scene=StaticFindObject('/Script/Engine.SceneComponent')
  local actorComponent=StaticFindObject('/Script/Engine.ActorComponent')
@@ -22,6 +23,11 @@ return function(T)
   assert(S.world,'Waiting for world save identity')
   S.write(T.root..'/state/laptops-'..S.world..'.json',J.encode({schema=1,items=L.data,lootSites=L.lootSites}))
  end
+ -- Save As gives the same live actors a new world GUID. Write their existing
+ -- identities before DBH completes the new save, including consumed loot sites.
+ S.onWorldSave=function(world)
+  if L.world then S.write(T.root..'/state/laptops-'..world..'.json',J.encode({schema=1,items=L.data,lootSites=L.lootSites}))end
+ end
  function L.sync(pc)
   for id,data in pairs(L.data)do N.send(pc,{op='laptops',id=id,closed=data.closed})end
  end
@@ -40,6 +46,7 @@ return function(T)
    c=valid(tag) and tag:GetAttachParent()
   end
   if not valid(c) or not c:IsA(meshClass) then
+   if not a:HasAuthority()then return end
    c=a:AddComponentByClass(meshClass,true,identity,false)
    assert(valid(c),'Laptop body unavailable')
    c:K2_AttachToComponent(a.DefaultSceneRoot,FName('None'),0,0,0,false)
@@ -125,14 +132,16 @@ return function(T)
  local function mountChanged(r)
   if not valid(r.base)then return end
   r.mounted=L.attached(r)
-  if r.mounted then r.base:SetWorldScale3D(identity.Scale3D)end
+  if r.mounted then r.base:SetWorldScale3D(identity.Scale3D);if r.actor:HasAuthority()then L.mount.schedule(r)end end
   syncHit(r)
  end
  function L.skin(a,id)
   local r=L.items[id];if r and same(r.actor,a)and valid(r.base)then return r end
   if r then if valid(r.actor)then L.actors[r.actor:GetAddress()]=nil end;if valid(r.helper)then L.helpers[r.helper:GetAddress()]=nil;r.helper:K2_DestroyActor()end;visual.destroy(r)end
-  local c=configureCarrier(a,id);if a:HasAuthority()then mark(a,id)end;r=visual.create(a);r.id=id;r.colliderAddress=c:GetAddress();L.items[id]=r;L.actors[a:GetAddress()]=r
+  local c=configureCarrier(a,id);if not valid(c)then L.dirty=true;return end
+  if a:HasAuthority()then mark(a,id)end;r=visual.create(a);r.id=id;r.colliderAddress=c:GetAddress();L.items[id]=r;L.actors[a:GetAddress()]=r
   L.fold(r,L.data[id]and L.data[id].closed or false)
+  if a:HasAuthority()and L.attached(r)then L.mount.schedule(r)end
   local path=T.root..'/state/laptop-'..id..'.png'
   if S.read(path,4*1024*1024)then local tex=StaticFindObject('/Script/Engine.Default__KismetRenderingLibrary'):ImportFileAsTexture2D(a,path);if valid(tex)then r.screenMaterial:SetTextureParameterValue(FName('SlateUI'),tex)end end
   return r
@@ -418,7 +427,12 @@ return function(T)
    local pc=ctx:get();local component=hit:get()
    if not valid(component)or not valid(pc)or not pc:HasAuthority()then return end
    local target=component:GetOwner();local r=valid(target)and L.helpers[target:GetAddress()]
-   if not r then return end
+   if not r then
+    if valid(target)then for _,laptop in pairs(L.items)do
+     if valid(laptop.actor)and same(laptop.actor:GetAttachParentActor(),target)then L.mount.schedule(laptop)end
+    end end
+    return
+   end
    -- Advanced Placement can submit its last hit after the screen collision is off.
    T.enqueue(function()
     local a=r.actor
@@ -434,6 +448,7 @@ return function(T)
     if not valid(hand.Item)then a:ExecutePrimaryAction(true,pc,r.base,a)end
    end)
   end)}
+  L.mount.install()
   L.hooks[21]={RegisterHook('/Game/BP/Items/Master/ItemBaseMaster.ItemBaseMaster_C:UpdateIsInHand',function(ctx,held)
    local r=L.actors[ctx:get():GetAddress()];if not r then return end
    r.inHand=held:get()==true

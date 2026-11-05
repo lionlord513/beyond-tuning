@@ -1,3 +1,10 @@
+# Beyond Tuning 1.2.6
+
+Supply the current vehicle's nitrous level, capacity and boost stage to the Beyond Apocalypse dashboard on each player's PC.
+
+Recover invalid guest laptop and nitrous bottle mounts on the original target so both players can see and remove the item.
+Charge guest bottle purchases to the buyer. Restore late-arriving save and network state and carry laptops and bottles into Save As copies.
+
 # Beyond Tuning 1.2.5
 
 Fixed multiplayer laptop purchases using the host wallet. Each buyer now pays from their own wallet.

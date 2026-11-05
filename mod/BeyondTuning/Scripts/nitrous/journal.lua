@@ -25,7 +25,7 @@ return function(T,log)
   J.ready=true;J.world=world;J.state={bottle={},site={}};J.error=nil
   if J.onLoad then J.onLoad(k)end
   if not k then return end
-  local bytes=T.storage.read(path(k),4*1024*1024)
+  local bytes=T.storage.recover(path(k),function(s)return s end,4*1024*1024)
   if not bytes then
    for _,mod in ipairs({'BeyondApocalypse','BasicM4'}) do
     bytes=T.storage.read(T.root..'/../'..mod..'/state/nitrous-'..k..'.txt',4*1024*1024)
@@ -39,12 +39,13 @@ return function(T,log)
  function J.writable()assert(J.ready and not J.error,J.error or 'Waiting for native nitrous save context')end
  function J.capture(save)
   if not J.ready or not valid(save)or not save:IsA(StaticFindObject('/Script/DriveBeyondHorizons.DBHSaveGame'))then return end
-  J.writable();local k,world=T.storage.saveKey(save);assert(k,'Native save has no revision identity')
-  if J.world and J.world~=world then return end;J.world=world
+  J.writable();local k,world=T.storage.saveKey(save);if not k then return end
+  if J.world and J.world~=world and not T.storage.activeSave(save)then return end;J.world=world
   if J.onCapture then J.onCapture(k)end
-  local target=path(k);local bytes=J.encode(J.state);local old=io.open(target,'rb')
-  if old then local before=old:read('*a');old:close();assert(before==bytes,'Native save reused a nitrous revision');return end
-  local f=assert(io.open(target..'.tmp','wb'));assert(f:write(bytes));assert(f:close());assert(os.rename(target..'.tmp',target))
+  local target=path(k);local bytes=J.encode(J.state);local old=T.storage.recover(target,function(s)return s end,4*1024*1024)
+  if old==bytes then return end
+  if old then assert(k:find('-'..string.rep('0',32)..'-',1,true),'Native save reused a nitrous revision')end
+  T.storage.write(target,bytes)
  end
  J.hooks={RegisterHook('/Script/DriveBeyondHorizons.DBHHelper:SaveGameToSlotAsyncReal',function(_,save)
   local ok,e=pcall(J.capture,save:get());if not ok then J.error=tostring(e);log('Nitrous save error: '..J.error)end
