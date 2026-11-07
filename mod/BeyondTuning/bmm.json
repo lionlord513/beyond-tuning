@@ -1,10 +1,10 @@
 {
   "Id": "beyondtuning",
   "Name": "Beyond Tuning",
-  "Version": "1.2.6",
+  "Version": "1.2.7",
   "Channel": "stable",
   "Description": "Tune your car, fit nitrous and take a laptop on the road.",
-  "Changelog": "Restore nitrous levels and boost status to the Beyond Apocalypse dashboard. Repair invalid guest laptop and nitrous bottle mounts on the original target. Charge the buyer for guest bottle purchases and preserve records through native Save As.",
+  "Changelog": "Cancel laptop screen captures safely when the item is stored, replaced or destroyed. Clean up disconnected desktop users without accessing expired controllers. Include the host delivery failure reason with laptop refunds.",
   "Dependencies": [
     "UE4SS"
   ],

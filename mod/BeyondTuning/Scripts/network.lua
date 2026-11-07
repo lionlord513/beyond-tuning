@@ -180,7 +180,7 @@ return function(T)
    if time<(N.relayAt or 0)then return end;N.relayAt=time+.1
    local watched={};if open and V.current then watched[V.current.id]=V.current.actor end
    for key,peer in pairs(N.peers)do
-    if not valid(peer.pc)or time-peer.seen>45 then if T.laptop and valid(peer.pc)then T.laptop.disconnect(peer.pc)end;N.peers[key]=nil
+    if not valid(peer.pc)or time-peer.seen>45 then if T.laptop then T.laptop.disconnect(peer.pc,key)end;N.peers[key]=nil
     else
      local car=valid(peer.pc.Vehicle)and peer.pc.Vehicle or peer.driven;local m=valid(car)and V.motor(car);if valid(m)then N.identity(car,m)end
      if peer.watch and time<(peer.watchUntil or 0)then watched[peer.watch]=find(peer.watch)end

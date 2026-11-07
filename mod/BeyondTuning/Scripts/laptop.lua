@@ -137,7 +137,7 @@ return function(T)
  end
  function L.skin(a,id)
   local r=L.items[id];if r and same(r.actor,a)and valid(r.base)then return r end
-  if r then if valid(r.actor)then L.actors[r.actor:GetAddress()]=nil end;if valid(r.helper)then L.helpers[r.helper:GetAddress()]=nil;r.helper:K2_DestroyActor()end;visual.destroy(r)end
+  if r then if L.capture and L.capture.r==r then L.cancelCapture()end;if valid(r.actor)then L.actors[r.actor:GetAddress()]=nil end;if valid(r.helper)then L.helpers[r.helper:GetAddress()]=nil;r.helper:K2_DestroyActor()end;visual.destroy(r)end
   local c=configureCarrier(a,id);if not valid(c)then L.dirty=true;return end
   if a:HasAuthority()then mark(a,id)end;r=visual.create(a);r.id=id;r.colliderAddress=c:GetAddress();L.items[id]=r;L.actors[a:GetAddress()]=r
   L.fold(r,L.data[id]and L.data[id].closed or false)
@@ -202,8 +202,10 @@ return function(T)
  function L.order()
   local pc=V.pc();if pc:HasAuthority()then T.ui.orderStatus(L.buy(pc))else L.shop.order()end
  end
- function L.disconnect(pc)
-  local address=pc:GetAddress()
+ function L.disconnect(pc,address)
+  -- The controller may already have ended play when the network peer expires.
+  -- Use the recorded key without dereferencing a destroyed native object.
+  address=address or (valid(pc)and pc:GetAddress());if not address then return end
   for _,r in pairs(L.items)do if r.users then r.users[address]=nil;if not next(r.users)and valid(r.proxy)then r.proxy:K2_DestroyActor();r.proxy=nil end end end
  end
  function L.request(pc,p)
@@ -284,11 +286,11 @@ return function(T)
   if c and valid(c.component)then
    pcall(function()c.component:SetComponentTickEnabled(false)end)
    pcall(function()c.component:SetWidget(nil)end)
-   pcall(function()c.component:K2_DestroyComponent(c.r.actor)end)
+   if valid(c.r.actor)then pcall(function()c.component:K2_DestroyComponent(c.r.actor)end)end
   end
  end
  function L.freeze(r,widget)
-  if not valid(widget)then return end
+  if not valid(widget)or not valid(r.actor)or not valid(r.screenMaterial)or L.items[r.id]~=r then return end
   L.cancelCapture()
   local width,height=1400,900
   if T.ui.opened and valid(widget.CP_RSPartWindow)then
@@ -401,6 +403,7 @@ return function(T)
   -- hit targets at EndPlay, without polling world items or leaving a ghost lid.
   L.hooks[16]={RegisterHook('/Game/BP/Items/Master/ItemBaseMaster.ItemBaseMaster_C:ReceiveEndPlay',function(ctx)
    local addr=ctx:get():GetAddress();local r=L.actors[addr];if not r then return end
+   if L.capture and L.capture.r==r then L.cancelCapture()end
    L.actors[addr]=nil
    if L.colliders then L.colliders[r.colliderAddress]=nil end
    if L.items[r.id]==r then L.items[r.id]=nil end
@@ -491,6 +494,12 @@ return function(T)
      for _,v in ipairs(a:K2_GetComponentsByClass(scene))do if v:get().AttachSocketName:ToString()=='BT_PC_'..w.id then local r=L.items[w.id];if r then L.waiting=nil;L.show(r,a)end;break end end
     end end
    end
+  end
+  -- Inventory storage, streaming and native destruction can retire the actor
+  -- between frames. Lua's pcall cannot catch a stale UObject access in C++.
+  if L.capture then
+   local c=L.capture
+   if L.items[c.r.id]~=c.r or not valid(c.r.actor)or not valid(c.r.screenMaterial)or not valid(c.component)then L.cancelCapture()end
   end
   if L.capture then
    local ok,e=pcall(function()

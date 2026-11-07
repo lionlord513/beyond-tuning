@@ -1,3 +1,7 @@
+# Beyond Tuning 1.2.7
+
+Cancel laptop screen captures safely when the item is stored, replaced or destroyed. Clean up disconnected desktop users without accessing expired controllers. Include the host delivery failure reason with laptop refunds.
+
 # Beyond Tuning 1.2.6
 
 Supply the current vehicle's nitrous level, capacity and boost stage to the Beyond Apocalypse dashboard on each player's PC.

@@ -94,7 +94,7 @@ return function(T,L)
    local balance=funds(pc)
    if balance==r.refundBefore then pc:AddMoney(r.price);persistWallet(pc)
    elseif balance~=r.refundBefore+r.price then finish('Laptop refund needs review. The saved order has been kept.');return end
-   r.state='refunded';save();finish('Laptop order failed. Your $'..r.price..' was refunded.');return
+   r.state='refunded';save();finish('Laptop order failed. Your $'..r.price..' was refunded.'..(r.reason and ' '..r.reason or ''));return
   end
   if r.state=='paid'then send('paid')end
  end
@@ -106,6 +106,7 @@ return function(T,L)
   elseif p.state=='quote'and r.state=='paid'then send('paid')
   elseif p.state=='delivered'and r.state=='paid'then r.state='delivered';save();finish(p.message or'Tuner Laptop delivered beside you')
   elseif(p.state=='refund'or p.state=='cancelled')and r.state=='paid'then
+   r.reason=type(p.message)=='string'and p.message:gsub('[\r\n]',' '):sub(1,140)or nil
    r.refundBefore=funds(V.pc());r.state='refunding';save();settle()
   elseif p.state=='cancelled'and r.state=='quote'then r.state='cancelled';save();finish(p.message or'Laptop order cancelled')end
  end

@@ -44,6 +44,7 @@ assert(not pcall(hp.server,b.remote,paid),'Another player replayed a purchase')
 now=20;local poor=endpoint(3,500);clients[3]=poor;poor.p.order();pump();assert(poor.balance==500 and poor.debits==0 and spawned==2 and not poor.l.orderPending)
 local c=endpoint(4,3000);clients[4]=c;c.p.order();step();step();assert(c.balance==2000);fail=true;step();fail=false;local refund=queue[1].p;pump()
 c.p.client(refund);assert(c.balance==3000 and c.refunds==1 and c.saves==1 and spawned==2)
+assert(c.message:find('No delivery space',1,true)and c.p.pending.reason=='No delivery space','Refund discarded the host delivery failure')
 local d=endpoint(5,4000);clients[5]=d;d.p.order();step();step();step();assert(spawned==3);queue={}
 d.p=build(d.t,d.l);now=30;d.p.tick();pump();assert(d.balance==3000 and d.debits==1 and spawned==3 and d.p.pending.state=='delivered')
 -- Recovery of a debit that completed just before its payment-journal update.

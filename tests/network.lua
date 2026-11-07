@@ -41,4 +41,15 @@ assert(T.storage.records[car].tune==3 and saves==1 and presets==1 and not U.pend
 ready(w);assert(T.storage.records[car].tune==3,'Repeat hello deleted a current tune')
 ready(w2);record(w,9);assert(not T.storage.records[car]and saves==1,'A prior world overwrote the save after travel')
 record(w2,0);assert(T.storage.records[car].tune==0 and saves==2,'New world must accept its initial revision')
+local clock=100
+StaticFindObject=function()return {GetTimeSeconds=function()return clock end}end
+testPc=pc(true,true);local pawn={IsLoaded=true}
+T.vehicle.player=function()return pawn end
+local cleaned={};T.laptop={disconnect=function(who,key)cleaned[key]=who end}
+local expiry=dofile(root..'/network.lua')(T);expiry.hooks={}
+local gone=pc(false,true);gone.alive=false
+local timedOut=pc(false,true)
+expiry.peers[11]={pc=gone,seen=100};expiry.peers[22]={pc=timedOut,seen=0}
+expiry.tick()
+assert(cleaned[11]==gone and cleaned[22]==timedOut and not next(expiry.peers),'Expired peers bypassed laptop cleanup')
 print('RPC regression: read-only strings, correct recipient, disconnected controller and other-mod isolation passed')
