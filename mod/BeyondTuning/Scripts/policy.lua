@@ -1,9 +1,9 @@
 -- Pure tuning math; all controls correspond to an AVS value or torque output.
 local P={schema=1,columns=8,rows=5}
 P.controls={
- {key='power',name='Engine output',min=70,max=135,step=5,unit='%',hint='Scales wheel torque. More output uses more fuel and produces more heat.'},
+ {key='power',name='Engine output',min=70,max=135,step=5,unit='%',hint='More power uses more fuel and produces more heat.'},
  {key='gearing',name='Final drive',min=75,max=125,step=5,unit='%',hint='Above 100: stronger acceleration, shorter gears. Below 100: taller gears.'},
- {key='limiter',name='Rev ceiling',min=80,max=115,step=5,unit='%',hint='Percentage of the installed engine redline. Cuts drive torque at the ceiling.'},
+ {key='limiter',name='Rev ceiling',min=80,max=115,step=5,unit='%',hint='Sets the rev limit as a percentage of the engine redline.'},
  {key='shift',name='Shift duration',min=60,max=150,step=10,unit='%',hint='Below 100 changes gear faster. Above 100 changes gear more slowly.'},
  {key='response',name='Pedal response',min=70,max=130,step=5,unit='%',hint='Above 100 gives more torque at part throttle; full throttle is unchanged.'},
 }

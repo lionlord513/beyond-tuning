@@ -224,7 +224,7 @@ return function(T)
   end
   label(p,'CONNECTED TO LAST VEHICLE',980,48,390,25,13,U.muted)
   if U.menu=='Boost'then boost()elseif U.menu=='Help'then help()elseif U.menu=='Settings'then settings()elseif U.menu=='File'then files()elseif U.menu=='Vehicle'then diagnostics()else tuning()end
-  rect(p,0,850,1400,50,U.paper);U.statusText=label(p,T.message,18,863,1364,28,15,U.muted)
+  rect(p,0,850,1400,50,U.paper);U.statusText=label(p,T.message=='Tuner Laptop delivered beside you' and 'Tuner Laptop' or T.message,18,863,1364,28,15,U.muted)
   U.refresh=false;U.refreshStatus=false;U.scale=nil;U.fit();U.update()
  end
  function U.holdEngine(texture)
@@ -233,7 +233,7 @@ return function(T)
  function U.update()
   if not valid(U.ui)then return end
   if U.refreshStatus and valid(U.statusText)then
-   U.statusText:SetText(FText(T.message))
+   U.statusText:SetText(FText(T.message=='Tuner Laptop delivered beside you' and 'Tuner Laptop' or T.message))
    if U.menu=='Boost' and valid(U.orderNote)then U.orderNote:SetText(FText(T.delivery.message or ''))end
    U.refreshStatus=false
   end

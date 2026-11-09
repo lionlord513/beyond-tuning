@@ -1,10 +1,10 @@
 {
   "Id": "beyondtuning",
   "Name": "Beyond Tuning",
-  "Version": "1.2.7",
+  "Version": "1.2.8",
   "Channel": "stable",
   "Description": "Tune your car, fit nitrous and take a laptop on the road.",
-  "Changelog": "Cancel laptop screen captures safely when the item is stored, replaced or destroyed. Clean up disconnected desktop users without accessing expired controllers. Include the host delivery failure reason with laptop refunds.",
+  "Changelog": "Shortened tuning help. The laptop screen no longer keeps the delivery notice.",
   "Dependencies": [
     "UE4SS"
   ],

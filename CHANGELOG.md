@@ -1,13 +1,17 @@
+# Beyond Tuning 1.2.8
+
+Shortened tuning help and removed the lingering laptop delivery notice from the tuning screen.
+
 # Beyond Tuning 1.2.7
 
-Cancel laptop screen captures safely when the item is stored, replaced or destroyed. Clean up disconnected desktop users without accessing expired controllers. Include the host delivery failure reason with laptop refunds.
+Fixed crashes when storing, replacing or destroying laptops, and when players disconnect from a computer. Failed laptop orders now show the reason with the refund.
 
 # Beyond Tuning 1.2.6
 
-Supply the current vehicle's nitrous level, capacity and boost stage to the Beyond Apocalypse dashboard on each player's PC.
+Added nitrous level and boost status to the Beyond Apocalypse dashboard for every player.
 
-Recover invalid guest laptop and nitrous bottle mounts on the original target so both players can see and remove the item.
-Charge guest bottle purchases to the buyer. Restore late-arriving save and network state and carry laptops and bottles into Save As copies.
+Fixed mounted laptops and nitrous bottles becoming invisible or impossible to remove in multiplayer.
+Fixed guest bottle purchases charging the host. Fixed laptops and bottles after loading, joining or using Save As.
 
 # Beyond Tuning 1.2.5
 
