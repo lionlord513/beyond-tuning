@@ -95,7 +95,7 @@ return function(T,N)
   for _,a in ipairs(FindAllOf('GasBarrelGaz_2_C')or{})do if valid(a)and a:GetFullName():find(':PersistentLevel.',1,true)then local id=N.guid(a);if id then bottles[id]=a end end end
   for id,r in pairs(M.pending)do
    local car=cars[r.mount.car];local bottle=bottles[id]
-   if valid(bottle)and valid(bottle:GetAttachParentActor())then M.pending[id]=nil
+   if valid(bottle)and valid(bottle:GetAttachParentActor())then N.adopt(bottle,r.variant,false);M.pending[id]=nil
    elseif valid(car)then
     local key=car:GetAddress()
     if not M.cars[key]then M.cars[key]=now end

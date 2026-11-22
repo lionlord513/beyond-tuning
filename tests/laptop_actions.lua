@@ -5,7 +5,11 @@ local callbacks,queue={},{}
 StaticFindObject=function()return {} end
 LoadAsset=function()end
 NotifyOnNewObject=function()end
-RegisterHook=function(path,fn) callbacks[path]=fn;return 1,1 end
+RegisterHook=function(path,fn)
+ local previous=callbacks[path]
+ callbacks[path]=previous and function(...)previous(...);return fn(...)end or fn
+ return 1,1
+end
 FText=function(s)return s end
 local function param(v)return {get=function()return v end} end
 local function object(id)return {GetAddress=function()return id end} end

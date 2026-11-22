@@ -36,12 +36,13 @@ return function(T,H,log)
  end
  function N.info(a)
   if not bottle(a)then return end;local r=N.items[a:GetFullName()];if live(r)then return r.def,r end
-  local id=N.journal.state.bottle[N.guid(a)];if not id then id=marker(a)end;return id and N.catalog[id]
+  local guid=N.guid(a);local saved=guid and N.mounts.records[guid]
+  local id=N.journal.state.bottle[guid]or(saved and saved.variant);if not id then id=marker(a)end;return id and N.catalog[id]
  end
  function N.adopt(a,id,fill)
   assert(bottle(a)and N.fluid.install(),'Nitrous donor unavailable');local d=assert(N.catalog[id],'Invalid bottle variant')
   local key=a:GetFullName();local r=N.items[key]
-  if r and same(r.actor,a)then return r end
+  if r and same(r.actor,a)then N.visuals.maintain(r);return r end
   local old,mark=marker(a)
   if a:HasAuthority()then
    N.journal.writable();local guid=assert(N.guid(a),'Bottle identity not ready')
@@ -54,7 +55,7 @@ return function(T,H,log)
    if not fill then N.mounts.quantity(a,guid)end
    a.ItemTankComponent:UpdateOwnerWeight();N.journal.state.bottle[guid]=id;a:FlushNetDormancy();a:ForceNetUpdate()
   else a.ItemTankComponent.MaxQuantity=d.litres end
-  r={actor=a,key=key,def=d,mark=mark};N.items[key]=r;N.visuals.apply(r,d);return r
+  r={actor=a,key=key,def=d,mark=mark};N.visuals.apply(r,d);N.items[key]=r;return r
  end
  function N.discard(a)
   if not valid(a) then return end
@@ -166,6 +167,7 @@ return function(T,H,log)
   for i,q in ipairs(incoming)do
    if i>16 or q.at and now<q.at then N.incoming[#N.incoming+1]=q
    elseif bottle(q.actor)then
+    local ok,e=pcall(function()
     local requestKey='BT_NewBottle_'..q.actor:GetFullName()
     local requested=q.actor:HasAuthority() and ModRef:GetSharedVariable(requestKey)
     if requested and N.catalog[requested] then
@@ -175,6 +177,11 @@ return function(T,H,log)
     local d=N.info(q.actor)
     if d then N.adopt(q.actor,d.id,false)
     elseif q.tries<30 then q.tries=q.tries+1;q.at=now+.5;N.incoming[#N.incoming+1]=q end
+    end)
+    if not ok then
+     if q.tries<30 then q.tries=q.tries+1;q.at=now+math.min(5,q.tries*.5);N.incoming[#N.incoming+1]=q end
+     if q.error~=tostring(e)then q.error=tostring(e);log('Bottle setup delayed: '..q.error)end
+    end
    end
   end
  end
@@ -203,7 +210,7 @@ return function(T,H,log)
  N.net=dofile(root..'/Scripts/nitrous/network.lua')(N,T,H,valid,enqueue,log)
  N.presentation=dofile(root..'/Scripts/nitrous/presentation.lua')(N,valid)
  local function tick(p,now)
-  if not p.IsLoaded or not N.fluid.install()then return end
+  if not p.IsLoaded or not p.IsInitialized or not N.fluid.install()then return end
   N.net.install()
   if not N.presentationReady and now>=(N.presentationAt or 0)then N.presentationAt=now+1;N.presentationReady=N.presentation.install()end
   if p:HasAuthority()then N.journal.load(game:GetGameInstance(p).MainSaveGame)end

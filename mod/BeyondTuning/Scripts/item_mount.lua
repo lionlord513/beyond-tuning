@@ -81,6 +81,26 @@ return function(T,L)
   local s=sample(r,pc);s.offset=o;s.rotation=q
  end
  local base='/Game/BP/PlayerController/PlayerControllerBase.PlayerControllerBase_C:'
+ local function finishRemoval(r,pc)
+  local a=r.actor
+  if not valid(a)or record(a)~=r or not a:HasAuthority()or not valid(pc)or not valid(pc.PlayerControlled)or
+   not same(a:GetWorld(),pc:GetWorld())then return end
+  local hand={};pc:GetItemInHand(hand)
+  local component=a.AttachableComponent
+  if not valid(component)then return end
+  local parent=a:GetAttachParentActor()
+  if valid(parent)then
+   -- Containers can enter the hands while their actor root and save row still
+   -- point at the car. Only finish a pickup the native game already accepted.
+   if not same(hand.Item,a)or a.isAttached or component.isAttached or not valid(parent.AttachActorOn)then return end
+   parent.AttachActorOn:RemoveAttachActorOn(a);a:K2_DetachFromActor(1,1,1)
+   component:ResetState(pc);a:FlushNetDormancy();a:ForceNetUpdate();parent:FlushNetDormancy();parent:ForceNetUpdate()
+   return
+  end
+  if valid(hand.Item)or a.isAttached or not component.isAttached then return end
+  component:ResetState(pc)
+  if valid(a.RootMeshComponent)then a:ExecutePrimaryAction(true,pc,a.RootMeshComponent,a)end
+ end
  local function install()
   RegisterHook(base..'SetDesiredAttachedTransform',function(ctx,tr,target)
    local pc,a=ctx:get(),target:get()
@@ -101,6 +121,14 @@ return function(T,L)
    local hand={};pc:GetItemInHand(hand);if not same(hand.Item,a)then return end
    r.mountBuyer=pc;sample(r,pc).native=copyPose(tr:get())
   end)
+  local attach='/Game/BP/Items/Master/ContainerMasterItem.ContainerMasterItem_C:'
+  local function removed(ctx,pressed,who)
+   if not pressed:get()then return end
+   local a,pc=ctx:get(),who:get();local r=record(a)
+   if r and a:HasAuthority()and valid(pc)then T.enqueue(function()finishRemoval(r,pc)end)end
+  end
+  RegisterHook(attach..'ExecuteSecondaryAction',removed)
+  RegisterHook(attach..'ExecutePrimaryAction',removed)
  end
  return {schedule=schedule,receive=receive,install=install}
 end

@@ -22,10 +22,12 @@ return function(T,log)
  function J.load(save)
   if J.ready or not valid(save)then return end
   local k,world=T.storage.saveKey(save);if not world then return end
-  J.ready=true;J.world=world;J.state={bottle={},site={}};J.error=nil
+  J.ready=true;J.world=world;J.state={bottle={},site={}};J.error='Nitrous records have not finished loading'
+  local ok,err=pcall(function()
   if J.onLoad then J.onLoad(k)end
   if not k then return end
-  local bytes=T.storage.recover(path(k),function(s)return s end,4*1024*1024)
+  local function checked(s)J.decode(s);return s end
+  local bytes=T.storage.recover(path(k),checked,4*1024*1024)
   if not bytes then
    for _,mod in ipairs({'BeyondApocalypse','BasicM4'}) do
     bytes=T.storage.read(T.root..'/../'..mod..'/state/nitrous-'..k..'.txt',4*1024*1024)
@@ -34,7 +36,9 @@ return function(T,log)
    if bytes then J.decode(bytes);T.storage.write(path(k),bytes) end
   end
   if not bytes then return end
-  local ok,s=pcall(J.decode,bytes);if ok then J.state=s else J.error=tostring(s);log('Nitrous snapshot rejected: '..J.error)end
+  J.state=J.decode(bytes)
+  end)
+  if ok then J.error=nil else J.error=tostring(err);log('Nitrous snapshot rejected: '..J.error)end
  end
  function J.writable()assert(J.ready and not J.error,J.error or 'Waiting for native nitrous save context')end
  function J.capture(save)

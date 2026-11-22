@@ -1,3 +1,10 @@
+# Beyond Tuning 1.2.9
+
+- Fixed nitrous bottles getting stuck after removal from a vehicle.
+- Restored bottle models after loading a save without refilling them.
+- Failed bottle setup now retries without leaving an unfinished model.
+- Reduced repeated laptop discovery searches.
+
 # Beyond Tuning 1.2.8
 
 Shortened tuning help and removed the lingering laptop delivery notice from the tuning screen.

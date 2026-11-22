@@ -489,7 +489,9 @@ return function(T)
   end
   if L.waiting then
    local w=L.waiting
-   if game:GetTimeSeconds(V.player())>w.untilTime then L.waiting=nil;T.status('Laptop desktop did not arrive from the host')else
+   local now=game:GetTimeSeconds(V.player())
+   if now>w.untilTime then L.waiting=nil;T.status('Laptop desktop did not arrive from the host')elseif now>=(w.scanAt or 0)then
+    w.scanAt=now+.25
     for _,a in ipairs(FindAllOf('BP_eBayPC_C')or{})do if valid(a)then
      for _,v in ipairs(a:K2_GetComponentsByClass(scene))do if v:get().AttachSocketName:ToString()=='BT_PC_'..w.id then local r=L.items[w.id];if r then L.waiting=nil;L.show(r,a)end;break end end
     end end

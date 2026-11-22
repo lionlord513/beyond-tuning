@@ -20,14 +20,17 @@ return function(root,valid)
   if math.abs(current.X-s)>.001 or math.abs(current.Y-s)>.001 or math.abs(current.Z-s)>.001 then a.TankMesh:SetWorldScale3D(desired)end
  end
  function V.apply(r,d)
-  local a=r.actor;local mesh=a.TankMesh;if not valid(mesh)then return end
+  local a=r.actor;local mesh=a.TankMesh;assert(valid(mesh),'Nitrous container mesh is not ready')
   -- Replace the 100-litre donor barrel collider, not just its visible skin.
   mesh:SetStaticMesh(collision());scale(r)
-  if not valid(r.visual)then
+  if not valid(r.visual)or r.visual:IsBeingDestroyed()then
    geometry=geometry or dofile(root..'/assets/nitrous/bottle.lua')
-   local c=a:AddComponentByClass(pmc,true,identity,false);assert(valid(c),'Nitrous mesh unavailable');r.visual=c
-   c:K2_AttachToComponent(mesh,FName('BA_NitrousVisual'),0,0,0,false);c:SetAbsolute(false,false,false);c:SetIsReplicated(false);c:SetCollisionEnabled(0)
+   local c=a:AddComponentByClass(pmc,true,identity,false);assert(valid(c),'Nitrous mesh unavailable')
+   local ok,e=pcall(function()
+   c:K2_AttachToComponent(mesh,FName('BA_NitrousVisual'),0,0,0,false);c:SetAbsolute(false,false,false);c:SetIsReplicated(false);c:SetCollisionEnabled(0);c:SetGenerateOverlapEvents(false);c:SetComponentTickEnabled(false)
    c:CreateMeshSection(0,geometry.vertices,geometry.triangles,geometry.normals,geometry.uv,{},tangent(geometry),false);c:SetMaterial(0,material(a,d));c:SetCullDistance(18000)
+   end)
+   if not ok then c:K2_DestroyComponent(a);error(e)end;r.visual=c
   end
   r.visual:SetRelativeScale3D({X=1,Y=1,Z=1});mesh:SetVisibility(false,false);a.Caps:SetVisibility(false,false)
   -- The origin is now between the two bracket feet, with the bottle horizontal.
@@ -44,7 +47,10 @@ return function(root,valid)
   return r
  end
  function V.maintain(r)
-  local a=r.actor;scale(r)
+  local a=r.actor
+  if not valid(r.visual)or r.visual:IsBeingDestroyed()or not valid(a.TankMesh.StaticMesh)or a.TankMesh.StaticMesh:GetAddress()~=collision():GetAddress()then V.apply(r,r.def)end
+  scale(r)
+  if not r.visual:IsVisible()then r.visual:SetVisibility(true,false)end
   if a.TankMesh:IsVisible()then a.TankMesh:SetVisibility(false,false)end
   if a.Caps:IsVisible()then a.Caps:SetVisibility(false,false)end
  end

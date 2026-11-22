@@ -1,10 +1,10 @@
 {
   "Id": "beyondtuning",
   "Name": "Beyond Tuning",
-  "Version": "1.2.8",
+  "Version": "1.2.9",
   "Channel": "stable",
   "Description": "Tune your car, fit nitrous and take a laptop on the road.",
-  "Changelog": "Shortened tuning help. The laptop screen no longer keeps the delivery notice.",
+  "Changelog": "Fixed stuck nitrous bottle removal and bottle models after loading a save. Preserved remaining nitrous during recovery and reduced repeated laptop searches.",
   "Dependencies": [
     "UE4SS"
   ],
