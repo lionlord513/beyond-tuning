@@ -18,8 +18,7 @@ with zipfile.ZipFile(archive,'w',zipfile.ZIP_DEFLATED,compresslevel=9) as z:
   if file.is_file():
    rel=file.relative_to(mod).as_posix()
    if rel in allowed or (rel.startswith('Scripts/') and file.suffix=='.lua'):z.write(file,prefix+rel)
- for file in sorted((root/'docs/screenshots').glob('*.png')):z.write(file,file.relative_to(root).as_posix())
- for name2 in ['README.md','CHANGELOG.md','LICENSE.txt','TESTING.md']:
+ for name2 in ['README.md','CHANGELOG.md','LICENSE.txt']:
   if (root/name2).exists():z.write(root/name2,name2)
 sha=hashlib.sha256(archive.read_bytes()).hexdigest()
 (out/'SHA256SUMS.txt').write_text(f'{sha}  {name}\n',encoding='utf-8')

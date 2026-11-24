@@ -1,3 +1,7 @@
+# 1.2.10
+
+- Cleaned up the download by removing development reports and testing notes. Gameplay is unchanged.
+
 # Beyond Tuning 1.2.9
 
 - Fixed nitrous bottles getting stuck after removal from a vehicle.
